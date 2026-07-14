@@ -104,8 +104,23 @@ export class TranslationService {
       return { translated: persisted.translatedText, fromCache: true, retries: 0 };
     }
 
-    // 3. Shield -> LLM -> validate -> (retry once on failure) -> unshield
-    const { sanitized, tokenMap } = this.guard.shieldText(sourceText);
+    const lockKey = RedisService.hashKey(sourceText, targetLanguage);
+    const lockToken = await this.redis.acquireLock(lockKey);
+    if (!lockToken) {
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        const completed = await this.redis.get(sourceText, targetLanguage);
+        if (completed) {
+          this.metrics.increment('cache_hits_total');
+          return { translated: completed, fromCache: true, retries: 0 };
+        }
+      }
+      throw new UnprocessableEntityException('Translation is still being processed; retry shortly.');
+    }
+
+    try {
+      // 3. Shield -> LLM -> validate -> (retry once on failure) -> unshield
+      const { sanitized, tokenMap } = this.guard.shieldText(sourceText);
     const expectedTokens = Object.keys(tokenMap);
 
     this.metrics.increment('llm_calls_total');
@@ -139,6 +154,9 @@ export class TranslationService {
     await this.cacheRepo.upsert({ stringHash, sourceText, targetLanguage, translatedText: finalTranslation });
     await this.redis.set(sourceText, targetLanguage, finalTranslation);
 
-    return { translated: finalTranslation, fromCache: false, retries };
+      return { translated: finalTranslation, fromCache: false, retries };
+    } finally {
+      await this.redis.releaseLock(lockKey, lockToken);
+    }
   }
 }

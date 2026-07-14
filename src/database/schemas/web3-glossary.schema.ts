@@ -8,14 +8,14 @@ export type DomainContext = 'DEX' | 'NFT' | 'DAO' | 'LENDING' | 'BRIDGE' | 'WALL
 @Schema({ timestamps: true, collection: 'web3_glossary' })
 export class Web3Glossary {
   @Prop({ required: true, unique: true, lowercase: true, trim: true, index: true })
-  term: string;
+  term!: string;
 
   @Prop({ required: true, default: 'GENERAL' })
-  domainContext: DomainContext;
+  domainContext!: DomainContext;
 
   // Map of language code -> verified localized term, e.g. { "pt-BR": "carteira", "zh-CN": "钱包" }
   @Prop({ type: MongooseSchema.Types.Map, of: String, default: {} })
-  localizedMappings: Map<string, string>;
+  localizedMappings!: Map<string, string>;
 }
 
 export const Web3GlossarySchema = SchemaFactory.createForClass(Web3Glossary);

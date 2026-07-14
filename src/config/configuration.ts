@@ -11,6 +11,7 @@ export interface LuminaConfig {
   cacheTtlSeconds: number;
   maxPayloadBytes: number;
   requestTimeoutMs: number;
+  corsOrigins: string[];
   llm: {
     baseUrl: string;
     apiKey: string;
@@ -18,9 +19,17 @@ export interface LuminaConfig {
   };
   mcpHttpPort: number;
   mcpHttpEnabled: boolean;
+  mcpAllowedHosts: string[];
   gitWebhookSecret?: string;
+  github: {
+    token?: string;
+    targetLanguages: string[];
+    sourceLocale: string;
+    outputDirectory: string;
+  };
   /** If set, all /translate and /decode-error calls require Authorization: Bearer <apiKey> */
   apiKey?: string;
+  apiKeys: string[];
   okx: {
     apiKey?: string;
     apiSecret?: string;
@@ -41,6 +50,7 @@ export default (): LuminaConfig => ({
   cacheTtlSeconds: parseInt(process.env.TRANSLATION_CACHE_TTL_SECONDS ?? '2592000', 10),
   maxPayloadBytes: parseInt(process.env.MAX_PAYLOAD_BYTES ?? '1048576', 10),
   requestTimeoutMs: parseInt(process.env.OUTBOUND_REQUEST_TIMEOUT_MS ?? '15000', 10),
+  corsOrigins: (process.env.CORS_ORIGINS ?? '').split(',').map((value) => value.trim()).filter(Boolean),
   llm: {
     baseUrl: process.env.LLM_BASE_URL ?? 'https://api.groq.com/openai/v1',
     apiKey: process.env.LLM_API_KEY || process.env.GROQ_API_KEY || '',
@@ -48,11 +58,33 @@ export default (): LuminaConfig => ({
   },
   mcpHttpPort: parseInt(process.env.MCP_HTTP_PORT ?? '3100', 10),
   mcpHttpEnabled: process.env.MCP_HTTP_ENABLED !== 'false',
+  mcpAllowedHosts: (process.env.MCP_ALLOWED_HOSTS ?? '').split(',').map((value) => value.trim().toLowerCase()).filter(Boolean),
   gitWebhookSecret: process.env.GIT_WEBHOOK_SECRET || undefined,
+  github: {
+    token: process.env.GITHUB_TOKEN || undefined,
+    targetLanguages: (process.env.GITHUB_TARGET_LANGUAGES ?? 'pt-BR,zh-CN,fr').split(',').map((value) => value.trim()).filter(Boolean),
+    sourceLocale: process.env.GITHUB_SOURCE_LOCALE ?? 'en',
+    outputDirectory: process.env.GITHUB_OUTPUT_DIRECTORY ?? 'locales',
+  },
   apiKey: process.env.LUMINA_API_KEY || undefined,
+  apiKeys: (process.env.LUMINA_API_KEYS ?? process.env.LUMINA_API_KEY ?? '').split(',').map((value) => value.trim()).filter(Boolean),
   okx: {
     apiKey: process.env.OKX_API_KEY || undefined,
     apiSecret: process.env.OKX_API_SECRET || undefined,
     passphrase: process.env.OKX_API_PASSPHRASE || undefined,
   },
 });
+
+export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
+  if (environment.NODE_ENV !== 'production') return environment;
+  const required = [
+    'MONGODB_URI', 'MCP_ALLOWED_HOSTS',
+    'GIT_WEBHOOK_SECRET', 'GITHUB_TOKEN', 'OKX_API_KEY', 'OKX_API_SECRET', 'OKX_API_PASSPHRASE',
+  ];
+  const missing = required.filter((key) => typeof environment[key] !== 'string' || !(environment[key] as string).trim());
+  if (!String(environment.REDIS_URL ?? environment.REDIS_HOST ?? '').trim()) missing.push('REDIS_URL');
+  if (!String(environment.LLM_API_KEY ?? environment.GROQ_API_KEY ?? '').trim()) missing.push('LLM_API_KEY');
+  if (!String(environment.LUMINA_API_KEYS ?? environment.LUMINA_API_KEY ?? '').trim()) missing.push('LUMINA_API_KEY');
+  if (missing.length > 0) throw new Error(`Missing required production environment variables: ${missing.join(', ')}`);
+  return environment;
+}

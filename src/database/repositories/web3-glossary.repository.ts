@@ -26,8 +26,11 @@ export class Web3GlossaryRepository {
    */
   async findRelevantTerms(text: string): Promise<Web3GlossaryDocument[]> {
     const lower = text.toLowerCase();
-    const all = await this.model.find().exec();
-    return all.filter((entry) => lower.includes(entry.term));
+    const all = await this.model.find().limit(2000).exec();
+    return all.filter((entry) => {
+      const escaped = entry.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`, 'iu').test(lower);
+    });
   }
 
   async upsertTerm(entry: {

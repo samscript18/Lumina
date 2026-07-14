@@ -11,7 +11,7 @@ export default [
     languageOptions: {
       parser,
       parserOptions: { project: './tsconfig.json', sourceType: 'module' },
-      globals: { console: 'readonly', process: 'readonly', Buffer: 'readonly', URL: 'readonly', fetch: 'readonly', AbortSignal: 'readonly' },
+      globals: { console: 'readonly', process: 'readonly', Buffer: 'readonly', URL: 'readonly', fetch: 'readonly', AbortSignal: 'readonly', setTimeout: 'readonly' },
     },
     plugins: { '@typescript-eslint': plugin },
     rules: {

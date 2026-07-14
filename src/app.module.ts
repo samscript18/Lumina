@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import configuration from './config/configuration';
+import configuration, { validateEnvironment } from './config/configuration';
 import { HealthController } from './health/health.controller';
 import { DatabaseModule } from './database/database.module';
 import { ParserModule } from './parser/parser.module';
@@ -16,12 +15,12 @@ import { ErrorInterpreterModule } from './error-interpreter/error-interpreter.mo
 import { GlossaryModule } from './glossary/glossary.module';
 import { McpModule } from './mcp/mcp.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { DistributedRateLimitGuard } from './common/guards/distributed-rate-limit.guard';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    ConfigModule.forRoot({ isGlobal: true, load: [configuration], validate: validateEnvironment }),
     MetricsModule,
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     DatabaseModule,
     ParserModule,
     ShieldModule,
@@ -35,6 +34,6 @@ import { MetricsModule } from './metrics/metrics.module';
     McpModule,
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [{ provide: APP_GUARD, useClass: DistributedRateLimitGuard }],
 })
 export class AppModule {}

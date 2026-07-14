@@ -7,11 +7,13 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { CallToolRequestSchema, ListToolsRequestSchema, isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import * as http from 'http';
 import { randomUUID } from 'crypto';
+import { timingSafeEqual } from 'crypto';
 import { z } from 'zod';
 import { TranslationService } from '../translation/translation.service';
 import { ErrorInterpreterService } from '../error-interpreter/error-interpreter.service';
 import { Web3GlossaryRepository } from '../database/repositories/web3-glossary.repository';
 import { MetricsService } from '../metrics/metrics.service';
+import { RedisService } from '../cache/redis.service';
 
 /**
  * Exposes Lumina as an MCP server so third-party autonomous agents (including
@@ -25,7 +27,6 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
   private httpServer?: http.Server;
   private readonly transportsBySession = new Map<string, SSEServerTransport>();
   private readonly streamableTransports = new Map<string, StreamableHTTPServerTransport>();
-  private readonly requestWindows = new Map<string, { startedAt: number; count: number }>();
 
   constructor(
     private readonly config: ConfigService,
@@ -33,6 +34,7 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
     private readonly errorInterpreterService: ErrorInterpreterService,
     private readonly glossaryRepo: Web3GlossaryRepository,
     private readonly metrics: MetricsService,
+    private readonly redis: RedisService,
   ) {}
 
   async onModuleInit() {
@@ -41,8 +43,10 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
 
     this.httpServer = http.createServer(async (req, res) => {
       try {
-        if (!this.authorize(req) || !this.withinRateLimit(req)) {
-          res.writeHead(!this.authorize(req) ? 401 : 429).end(!this.authorize(req) ? 'Unauthorized' : 'Rate limit exceeded');
+        const authorized = this.authorize(req);
+        const withinLimit = authorized ? await this.withinRateLimit(req) : false;
+        if (!authorized || !withinLimit) {
+          res.writeHead(!authorized ? 401 : 429).end(!authorized ? 'Unauthorized' : 'Rate limit exceeded');
           return;
         }
         const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -112,21 +116,27 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
   }
 
   private authorize(req: http.IncomingMessage): boolean {
-    const key = this.config.get<string>('apiKey');
-    if (!key) return this.config.get<string>('nodeEnv') !== 'production';
-    return req.headers.authorization === `Bearer ${key}`;
+    const allowedHosts = this.config.get<string[]>('mcpAllowedHosts') ?? [];
+    const host = (req.headers.host ?? '').split(':')[0]!.toLowerCase();
+    if (allowedHosts.length > 0 && !allowedHosts.includes(host)) return false;
+    if (allowedHosts.length === 0 && this.config.get<string>('nodeEnv') === 'production') return false;
+    const value = this.config.get<string[]>('apiKeys');
+    const keys = Array.isArray(value) ? value : [];
+    const fallback = this.config.get<string>('apiKey');
+    const configured = keys.length > 0 ? keys : fallback ? [fallback] : [];
+    if (configured.length === 0) return this.config.get<string>('nodeEnv') !== 'production';
+    const provided = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+    if (!provided) return false;
+    return configured.some((key) => {
+      const expected = Buffer.from(key);
+      const actual = Buffer.from(provided);
+      return expected.length === actual.length && timingSafeEqual(expected, actual);
+    });
   }
 
-  private withinRateLimit(req: http.IncomingMessage): boolean {
-    const now = Date.now();
-    const id = req.socket.remoteAddress ?? 'unknown';
-    const current = this.requestWindows.get(id);
-    if (!current || now - current.startedAt >= 60_000) {
-      this.requestWindows.set(id, { startedAt: now, count: 1 });
-      return true;
-    }
-    current.count += 1;
-    return current.count <= 120;
+  private async withinRateLimit(req: http.IncomingMessage): Promise<boolean> {
+    const id = req.headers.authorization ?? req.socket.remoteAddress ?? 'unknown';
+    return (await this.redis.consumeRateLimit(`mcp:${RedisService.hashKey(id, 'client')}`, 120, 60)).allowed;
   }
 
   private async readBody(req: http.IncomingMessage): Promise<Buffer> {

@@ -39,9 +39,18 @@ export class ContextParserService {
     );
     if (unchanged && translated.length === parsed.strings.length) return parsed.sourceContent;
 
-    const rebuilt = this.reconstruct(parsed.skeleton, translated);
-    if (parsed.format === 'json') return JSON.stringify(rebuilt, null, 2);
-    return `export default ${JSON.stringify(rebuilt, null, 2)};\n`;
+    return this.serialize(parsed, this.reconstruct(parsed.skeleton, translated));
+  }
+
+  serialize(parsed: ParseResult, rebuilt: unknown): string {
+    const json = JSON.stringify(rebuilt, null, 2);
+    if (parsed.format === 'json') return `${json}\n`;
+    if (/\bmodule\.exports\s*=/.test(parsed.sourceContent)) return `module.exports = ${json};\n`;
+    const named = parsed.sourceContent.match(/\bexport\s+const\s+([A-Za-z_$][\w$]*)\s*=/);
+    if (named?.[1] && rebuilt && typeof rebuilt === 'object' && named[1] in rebuilt) {
+      return `export const ${named[1]} = ${JSON.stringify((rebuilt as Record<string, unknown>)[named[1]], null, 2)};\n`;
+    }
+    return `export default ${json};\n`;
   }
 
   // ---- internals ----
@@ -130,10 +139,11 @@ export class ContextParserService {
   }
 
   private setAtPath(root: any, path: (string | number)[], value: string): void {
+    if (path.length === 0) throw new BadRequestException('Root string payloads are not supported as localization files');
     let cursor = root;
     for (let i = 0; i < path.length - 1; i++) {
-      cursor = cursor[path[i]];
+      cursor = cursor[path[i]!];
     }
-    cursor[path[path.length - 1]] = value;
+    cursor[path[path.length - 1]!] = value;
   }
 }

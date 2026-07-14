@@ -17,9 +17,9 @@ import Redis from 'ioredis';
 
 const results: { name: string; ok: boolean; detail: string }[] = [];
 
-async function checkMongo() {
+async function checkMongo(): Promise<void> {
   const uri = process.env.MONGODB_URI;
-  if (!uri) return results.push({ name: 'MongoDB', ok: false, detail: 'MONGODB_URI not set' });
+  if (!uri) { results.push({ name: 'MongoDB', ok: false, detail: 'MONGODB_URI not set' }); return; }
   try {
     await mongoose.connect(uri, { serverSelectionTimeoutMS: 8000 });
     await mongoose.connection.db!.admin().ping();
@@ -30,9 +30,9 @@ async function checkMongo() {
   }
 }
 
-async function checkRedis() {
+async function checkRedis(): Promise<void> {
   const url = process.env.REDIS_URL;
-  if (!url) return results.push({ name: 'Redis', ok: false, detail: 'REDIS_URL not set' });
+  if (!url) { results.push({ name: 'Redis', ok: false, detail: 'REDIS_URL not set' }); return; }
   const client = new Redis(url, { maxRetriesPerRequest: 1, lazyConnect: true });
   try {
     await client.connect();
@@ -47,11 +47,11 @@ async function checkRedis() {
   }
 }
 
-async function checkGroq() {
+async function checkGroq(): Promise<void> {
   const apiKey = process.env.LLM_API_KEY || process.env.GROQ_API_KEY;
   const baseUrl = process.env.LLM_BASE_URL ?? 'https://api.groq.com/openai/v1';
   const model = process.env.LLM_MODEL ?? 'llama-3.3-70b-versatile';
-  if (!apiKey) return results.push({ name: 'Groq/LLM', ok: false, detail: 'LLM_API_KEY / GROQ_API_KEY not set' });
+  if (!apiKey) { results.push({ name: 'Groq/LLM', ok: false, detail: 'LLM_API_KEY / GROQ_API_KEY not set' }); return; }
 
   try {
     const res = await fetch(`${baseUrl}/chat/completions`, {

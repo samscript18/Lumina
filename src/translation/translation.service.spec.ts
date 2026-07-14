@@ -9,7 +9,10 @@ function createService(outputs: string[]) {
     translate: jest.fn(async () => outputs.shift()!),
     translateWithCorrection: jest.fn(async () => outputs.shift()!),
   };
-  const redis = { get: jest.fn(async () => null), set: jest.fn(async () => undefined) };
+  const redis = {
+    get: jest.fn(async () => null), set: jest.fn(async () => undefined),
+    acquireLock: jest.fn(async () => 'lock-token'), releaseLock: jest.fn(async () => undefined),
+  };
   const cache = { findByHash: jest.fn(async () => null), upsert: jest.fn(async () => ({})), registerHit: jest.fn() };
   const metrics = { increment: jest.fn() };
   const service = new TranslationService(

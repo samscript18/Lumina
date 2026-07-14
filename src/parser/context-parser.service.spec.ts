@@ -25,4 +25,9 @@ describe('ContextParserService', () => {
   it('never executes dynamic TS/JS expressions', () => {
     expect(() => service.parse('export default { title: (() => "bad")() };', 'ts-i18n')).toThrow(/Dynamic expression/);
   });
+
+  it('preserves CommonJS module style when emitting changed content', () => {
+    const parsed = service.parse('module.exports = { title: "Old" };', 'js-i18n');
+    expect(service.serialize(parsed, { title: 'New' })).toBe('module.exports = {\n  "title": "New"\n};\n');
+  });
 });

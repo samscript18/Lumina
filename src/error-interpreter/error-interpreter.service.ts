@@ -10,6 +10,8 @@ export interface DecodedError {
   language: string;
   message: string;
   actionable: string;
+  probableCause: string;
+  retryable: boolean;
 }
 
 @Injectable()
@@ -35,6 +37,8 @@ export class ErrorInterpreterService {
         language: 'en',
         message: entry.plainEnglish,
         actionable: entry.actionable,
+        probableCause: entry.plainEnglish,
+        retryable: entry.httpStatus === 429 || entry.httpStatus >= 500 || ['50011', '50026', '82116', '81451'].includes(entry.code),
       };
     }
 
@@ -45,7 +49,11 @@ export class ErrorInterpreterService {
       this.translationService.translateString(entry.actionable, targetLanguage),
     ]);
 
-    return { code: entry.code, api: entry.api, officialMessage: entry.officialMessage, language: targetLanguage, message, actionable };
+    return {
+      code: entry.code, api: entry.api, officialMessage: entry.officialMessage,
+      language: targetLanguage, message, actionable, probableCause: message,
+      retryable: entry.httpStatus === 429 || entry.httpStatus >= 500 || ['50011', '50026', '82116', '81451'].includes(entry.code),
+    };
   }
 
   /**

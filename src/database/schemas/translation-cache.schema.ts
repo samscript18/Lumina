@@ -6,22 +6,22 @@ export type TranslationCacheDocument = TranslationCache & Document;
 @Schema({ timestamps: true, collection: 'translation_cache' })
 export class TranslationCache {
   @Prop({ required: true, unique: true, index: true })
-  stringHash: string; // MD5 of `${sourceText}::${targetLanguage}`
+  stringHash!: string; // MD5 of `${sourceText}::${targetLanguage}`
 
   @Prop({ required: true })
-  sourceText: string;
+  sourceText!: string;
 
   @Prop({ required: true, index: true })
-  targetLanguage: string;
+  targetLanguage!: string;
 
   @Prop({ required: true })
-  translatedText: string;
+  translatedText!: string;
 
   @Prop({ default: 0 })
-  hitCount: number;
+  hitCount!: number;
 
   @Prop({ default: () => new Date() })
-  lastHit: Date;
+  lastHit!: Date;
 }
 
 export const TranslationCacheSchema = SchemaFactory.createForClass(TranslationCache);

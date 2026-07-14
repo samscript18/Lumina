@@ -70,6 +70,58 @@ export class RedisService implements OnModuleDestroy {
     }
   }
 
+  async acquireLock(key: string, ttlMs = 30_000): Promise<string | null> {
+    await this.connectIfNeeded();
+    const token = crypto.randomUUID();
+    try {
+      const result = await this.client.set(`lumina:lock:${key}`, token, 'PX', ttlMs, 'NX');
+      return result === 'OK' ? token : null;
+    } catch (error) {
+      this.logger.warn(`Redis lock acquisition failed: ${(error as Error).message}`);
+      return token; // fail open so a Redis outage does not stop translation
+    }
+  }
+
+  async releaseLock(key: string, token: string): Promise<void> {
+    try {
+      await this.client.eval(
+        'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end',
+        1,
+        `lumina:lock:${key}`,
+        token,
+      );
+    } catch (error) {
+      this.logger.warn(`Redis lock release failed: ${(error as Error).message}`);
+    }
+  }
+
+  async claimIdempotencyKey(key: string, ttlSeconds = 86_400): Promise<boolean> {
+    await this.connectIfNeeded();
+    try {
+      return (await this.client.set(`lumina:idempotency:${key}`, '1', 'EX', ttlSeconds, 'NX')) === 'OK';
+    } catch (error) {
+      this.logger.warn(`Idempotency check failed: ${(error as Error).message}`);
+      return true;
+    }
+  }
+
+  async releaseIdempotencyKey(key: string): Promise<void> {
+    try { await this.client.del(`lumina:idempotency:${key}`); } catch { /* a retry will be possible after TTL */ }
+  }
+
+  async consumeRateLimit(key: string, limit: number, windowSeconds: number): Promise<{ allowed: boolean; remaining: number }> {
+    await this.connectIfNeeded();
+    const redisKey = `lumina:rate:${key}`;
+    try {
+      const count = await this.client.incr(redisKey);
+      if (count === 1) await this.client.expire(redisKey, windowSeconds);
+      return { allowed: count <= limit, remaining: Math.max(0, limit - count) };
+    } catch (error) {
+      this.logger.warn(`Distributed rate limit unavailable: ${(error as Error).message}`);
+      return { allowed: true, remaining: limit };
+    }
+  }
+
   onModuleDestroy() {
     this.client.disconnect();
   }
