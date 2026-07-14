@@ -1,0 +1,19 @@
+---
+title: "API keys and scopes"
+description: "Issue, rotate, attribute, and revoke database-backed consumer credentials."
+---
+
+The environment `LUMINA_API_KEY` is the bootstrap administration key. Consumer keys are generated through `/api/v1/admin/api-keys`, stored only as SHA-256 hashes, and returned in plaintext exactly once.
+
+Available scopes are `translate`, `decode`, `quote`, `glossary`, `metrics`, `mcp`, `gitops`, and `admin`.
+
+```bash
+curl https://lumina-e3vi.onrender.com/api/v1/admin/api-keys \
+  -H "Authorization: Bearer $LUMINA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"my-dapp","scopes":["translate","decode","glossary"]}'
+```
+
+Save the returned key immediately. List responses expose only its prefix, status, scopes, expiry, last-use timestamp, and usage count.
+
+Rotation creates a replacement key. Keep the old key active while consumers deploy the replacement, then revoke it explicitly or pass `revokeOld: true` when immediate cutover is safe.

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ApiKeyGuard } from './guards/api-key.guard';
 import { DistributedRateLimitGuard } from './guards/distributed-rate-limit.guard';
 import { CacheModule } from '../cache/cache.module';
+import { AccessModule } from '../access/access.module';
 
 @Module({
-  imports: [CacheModule],
-  providers: [ApiKeyGuard, DistributedRateLimitGuard],
-  exports: [ApiKeyGuard, DistributedRateLimitGuard],
+  imports: [CacheModule, AccessModule],
+  providers: [DistributedRateLimitGuard],
+  exports: [AccessModule, DistributedRateLimitGuard],
 })
 export class CommonModule {}

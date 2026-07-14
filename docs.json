@@ -22,8 +22,8 @@
         "tab": "Documentation",
         "groups": [
           { "group": "Start here", "pages": ["docs/introduction", "docs/how-lumina-works", "docs/quickstart"] },
-          { "group": "Integrate", "pages": ["docs/rest-api", "docs/mcp", "docs/github-gitops"] },
-          { "group": "Operate", "pages": ["docs/configuration", "docs/security", "docs/render-deployment"] }
+          { "group": "Integrate", "pages": ["docs/typescript-sdk", "docs/rest-api", "docs/mcp", "docs/github-gitops"] },
+          { "group": "Operate", "pages": ["docs/configuration", "docs/api-keys", "docs/security", "docs/operations", "docs/render-deployment"] }
         ]
       },
       {

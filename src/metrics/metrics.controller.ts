@@ -2,8 +2,10 @@ import { Controller, Get, Header, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
 import { MetricsService } from './metrics.service';
+import { RequireScopes } from '../access/scopes.decorator';
 
 @UseGuards(ApiKeyGuard)
+@RequireScopes('metrics')
 @Controller('metrics')
 export class MetricsController {
   constructor(private readonly metrics: MetricsService) {}

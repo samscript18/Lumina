@@ -16,11 +16,13 @@ import { GlossaryModule } from './glossary/glossary.module';
 import { McpModule } from './mcp/mcp.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { DistributedRateLimitGuard } from './common/guards/distributed-rate-limit.guard';
+import { AccessModule } from './access/access.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration], validate: validateEnvironment }),
     MetricsModule,
+    AccessModule,
     DatabaseModule,
     ParserModule,
     ShieldModule,

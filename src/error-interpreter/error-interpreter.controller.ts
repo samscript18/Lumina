@@ -3,6 +3,7 @@ import { IsIn, IsOptional, IsString, MinLength } from 'class-validator';
 import { ErrorInterpreterService } from './error-interpreter.service';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
 import { ApiBearerAuth, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { RequireScopes } from '../access/scopes.decorator';
 
 class DecodeErrorDto {
   @ApiProperty({ example: 'INSUFFICIENT_OUTPUT_AMOUNT' })
@@ -49,6 +50,7 @@ class LiveQuoteDto {
 }
 
 @UseGuards(ApiKeyGuard)
+@RequireScopes('decode')
 @ApiTags('Onchain errors')
 @ApiBearerAuth()
 @Controller('decode-error')
@@ -69,6 +71,7 @@ export class ErrorInterpreterController {
  * a real outbound network call.
  */
 @UseGuards(ApiKeyGuard)
+@RequireScopes('quote')
 @ApiTags('OnchainOS')
 @ApiBearerAuth()
 @Controller('onchain')

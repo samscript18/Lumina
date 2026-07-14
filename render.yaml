@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+services:
+  - type: web
+    name: lumina
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health/ready
+    autoDeployTrigger: checksPass
+    maxShutdownDelaySeconds: 60
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MCP_HTTP_ENABLED
+        value: "false"
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: LLM_BASE_URL
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: LUMINA_API_KEY
+        sync: false
+      - key: MCP_ALLOWED_HOSTS
+        value: lumina-e3vi.onrender.com
+      - key: CORS_ORIGINS
+        sync: false
+      - key: GIT_WEBHOOK_SECRET
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_TARGET_LANGUAGES
+        value: pt-BR,zh-CN,fr,es,de,ja
+      - key: GITHUB_SOURCE_LOCALE
+        value: en
+      - key: GITHUB_OUTPUT_DIRECTORY
+        value: locales
+      - key: OKX_API_KEY
+        sync: false
+      - key: OKX_API_SECRET
+        sync: false
+      - key: OKX_API_PASSPHRASE
+        sync: false

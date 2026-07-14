@@ -1,8 +1,10 @@
 import { Controller, Get, NotFoundException, Query, UseGuards } from '@nestjs/common';
 import { Web3GlossaryRepository } from '../database/repositories/web3-glossary.repository';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
+import { RequireScopes } from '../access/scopes.decorator';
 
 @UseGuards(ApiKeyGuard)
+@RequireScopes('glossary')
 @Controller('glossary')
 export class GlossaryController {
   constructor(private readonly glossaryRepo: Web3GlossaryRepository) {}

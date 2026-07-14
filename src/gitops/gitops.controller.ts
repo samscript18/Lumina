@@ -8,6 +8,7 @@ import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsObject, IsOptional, IsStri
 import { Request } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GitHubPushPayload, GitHubWebhookService } from './github-webhook.service';
+import { RequireScopes } from '../access/scopes.decorator';
 
 class GitSyncFileDto {
   @IsString() @MinLength(1) @MaxLength(1024) path!: string;
@@ -33,6 +34,7 @@ export class GitopsController {
   ) {}
 
   @UseGuards(ApiKeyGuard)
+  @RequireScopes('gitops')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Translate an explicitly supplied localization file tree' })
   @Post('git-sync')

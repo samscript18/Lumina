@@ -1,0 +1,24 @@
+---
+title: "Operations and recovery"
+description: "Monitoring, alerting, backups, load tests, security scans, and Render rollback."
+---
+
+## Monitoring
+
+The scheduled Production Monitor checks health, readiness, Swagger, OpenAPI, authentication, translation, and token integrity every 15 minutes. Add repository secrets `LUMINA_API_KEY` and `ALERT_WEBHOOK_URL`; GitHub also reports failed workflow runs.
+
+## Encrypted backups
+
+The backup workflow exports `translation_cache`, `web3_glossary`, and `api_credentials`, compresses the data, encrypts it with AES-256-GCM, uploads it to S3-compatible storage, and immediately verifies its checksum, authentication tag, document format, and collection counts.
+
+Configure `BACKUP_ENCRYPTION_KEY`, S3 credentials, and `MONGODB_URI` in the protected `production-backup` GitHub environment. Schedule the workflow only after a successful manual backup and non-production restore drill.
+
+`npm run backup:restore` refuses to target the production URI and requires an explicit `RESTORE_CONFIRM=RESTORE_TO_NON_PRODUCTION` safety value.
+
+## Load and security gates
+
+Run the protected **Production Load Test** workflow to enforce a measured p95 and error-rate threshold. The Security workflow scans dependencies, the repository filesystem, and the built container for high and critical vulnerabilities.
+
+## Render rollback
+
+`npm run render:rollback` calls Render's artifact rollback endpoint. It requires an exact deploy ID confirmation so an operator cannot accidentally roll back to the wrong release.

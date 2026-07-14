@@ -1,0 +1,41 @@
+name: MongoDB Backup
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backup-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production-backup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci --ignore-scripts
+      - id: backup
+        run: |
+          output=$(npm run --silent backup:mongodb)
+          echo "$output"
+          echo "object_key=$(echo "$output" | jq -r .objectKey)" >> "$GITHUB_OUTPUT"
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          BACKUP_S3_PREFIX: lumina-production
+          BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          BACKUP_S3_FORCE_PATH_STYLE: ${{ vars.BACKUP_S3_FORCE_PATH_STYLE }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - run: npm run backup:verify
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          BACKUP_S3_PREFIX: lumina-production
+          BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          BACKUP_S3_FORCE_PATH_STYLE: ${{ vars.BACKUP_S3_FORCE_PATH_STYLE }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          BACKUP_OBJECT_KEY: ${{ steps.backup.outputs.object_key }}

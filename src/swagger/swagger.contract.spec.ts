@@ -7,6 +7,7 @@ import { TranslationService } from '../translation/translation.service';
 import { ErrorInterpreterController, OnchainController } from '../error-interpreter/error-interpreter.controller';
 import { ErrorInterpreterService } from '../error-interpreter/error-interpreter.service';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
+import { ApiCredentialService } from '../access/api-credential.service';
 
 describe('Swagger contract', () => {
   let app: INestApplication;
@@ -20,6 +21,7 @@ describe('Swagger contract', () => {
         { provide: TranslationService, useValue: {} },
         { provide: ErrorInterpreterService, useValue: {} },
         { provide: ConfigService, useValue: { get: jest.fn() } },
+        { provide: ApiCredentialService, useValue: { authenticate: jest.fn() } },
         ApiKeyGuard,
       ],
     }).compile();

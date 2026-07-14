@@ -3,6 +3,7 @@ import { IsIn, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { TranslationService } from './translation.service';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
 import { ApiBearerAuth, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { RequireScopes } from '../access/scopes.decorator';
 
 class TranslateStringDto {
   @ApiProperty({ example: 'Swap {amount} ETH' })
@@ -39,6 +40,7 @@ class TranslateFileDto {
 }
 
 @UseGuards(ApiKeyGuard)
+@RequireScopes('translate')
 @ApiTags('Translation')
 @ApiBearerAuth()
 @Controller('translate')

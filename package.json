@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "description": "Lumina — Web3 semantic localization middleware (OKX.AI ASP)",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "license": "MIT",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && npm run build --workspace @lumina-ai/sdk",
     "typecheck": "tsc --noEmit --incremental false",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -14,13 +17,22 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "start:mcp:stdio": "node dist/mcp-stdio",
-    "lint": "eslint \"{src,scripts}/**/*.ts\"",
+    "lint": "eslint \"{src,scripts,packages}/**/*.ts\"",
     "seed:glossary": "ts-node scripts/seed-glossary.ts",
     "verify:live": "ts-node scripts/verify-live.ts",
+    "verify:production": "ts-node scripts/production-smoke.ts",
+    "load:test": "ts-node scripts/load-test.ts",
+    "backup:mongodb": "ts-node scripts/backup-mongodb.ts",
+    "backup:verify": "ts-node scripts/verify-backup.ts",
+    "backup:restore": "ts-node scripts/restore-mongodb.ts",
+    "render:rollback": "ts-node scripts/render-rollback.ts",
     "test": "jest --runInBand",
+    "sdk:pack": "npm pack --workspace @lumina-ai/sdk --dry-run --cache .cache/npm",
+    "docs:validate": "npm exec --yes --cache .cache/npm --package=mint@4.2.694 -- mint validate",
     "test:cov": "jest --coverage --runInBand"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1086.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@nestjs/common": "^11.1.28",
     "@nestjs/config": "^4.0.4",
@@ -28,11 +40,13 @@
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.1.28",
     "@nestjs/swagger": "^11.4.5",
+    "bson": "^7.3.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
     "helmet": "^8.3.0",
     "ioredis": "^5.4.1",
+    "mongodb": "^7.5.0",
     "mongoose": "^8.6.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
@@ -49,6 +63,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
     },
     "collectCoverageFrom": [
       "src/**/*.ts",

@@ -1,0 +1,23 @@
+name: Publish TypeScript SDK
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    if: startsWith(github.event.release.tag_name, 'sdk-v')
+    runs-on: ubuntu-latest
+    environment: npm-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm run sdk:pack
+      - run: npm publish --workspace @lumina-ai/sdk --access public --provenance

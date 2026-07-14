@@ -27,9 +27,10 @@ Persistence (Mongo schemas/repositories for the translation cache and Web3 gloss
 
 Lumina exposes one deployed service through three integration surfaces:
 
-1. **AI agents — MCP Streamable HTTP:** connect to `https://lumina-e3vi.onrender.com/mcp` with a bearer key, discover `translate_text`, `decode_error`, and `glossary_lookup`, and call them without a custom protocol adapter. This is the preferred OKX.AI integration.
-2. **dApp backends — REST:** call the versioned `/api/v1` endpoints from a trusted server. Never embed `LUMINA_API_KEY` in public browser JavaScript.
-3. **GitHub automation:** send signed push events to `/api/v1/webhooks/github`. Lumina discovers changed source-locale files, generates localized artifacts, and opens a pull request.
+1. **TypeScript applications — SDK:** use the typed `@lumina-ai/sdk` workspace package from a trusted backend, worker, or server action.
+2. **AI agents — MCP Streamable HTTP:** connect to `https://lumina-e3vi.onrender.com/mcp` with a bearer key, discover `translate_text`, `decode_error`, and `glossary_lookup`, and call them without a custom protocol adapter. This is the preferred OKX.AI integration.
+3. **dApp backends — REST:** call the versioned `/api/v1` endpoints from a trusted server. Never embed a Lumina API key in public browser JavaScript.
+4. **GitHub automation:** send signed push events to `/api/v1/webhooks/github`. Lumina discovers changed source-locale files, generates localized artifacts, and opens a pull request.
 
 Interactive Swagger/OpenAPI documentation is served at `/docs`.
 
@@ -102,6 +103,7 @@ npm run start:mcp:stdio
 - **TS/JS i18n parsing** uses the TypeScript AST and accepts static object/array/scalar literals only. Repository code is never evaluated; dynamic expressions, spreads, getters, computed keys, and prototype-sensitive keys are rejected.
 - **Key-path GitOps diffing**: `GitopsService` compares previous/current values by structural key path. Include `previousTranslatedContent: { "fr": "..." }` for each file to reuse unchanged localized values and translate only changed/new paths. Without a prior localized artifact, Lumina deliberately performs one complete translation so it never emits a mixed-language file.
 - **API key auth**: `ApiKeyGuard` gates the billable endpoints (`/translate/*`, `/decode-error`, `/webhooks/git-sync`) behind `LUMINA_API_KEY` when set; a no-op locally if unset.
+- **Consumer credential lifecycle**: production consumers can use hashed, scoped MongoDB credentials with expiry, rotation, revocation, last-use timestamps, and usage counters. The environment key remains the bootstrap administration credential.
 - **Global exception filter**: every unhandled error is normalized to a clean JSON error response server-side; stack traces are logged, never returned to callers.
 
 ## Production checks
@@ -110,7 +112,12 @@ npm run start:mcp:stdio
 npm run check
 npm audit --omit=dev
 npm run verify:live
+npm run verify:production
+npm run sdk:pack
+npm run docs:validate
 ```
+
+Operational workflows cover scheduled smoke monitoring, protected load tests, runtime dependency and container scanning, encrypted S3-compatible MongoDB backups, restore verification, and Render artifact rollback. See `docs/operations.mdx` for required secrets and safety gates.
 
 The automated suite covers parser extraction/lossless no-op round trips, adversarial nested shielding, validator rejection, corrective retry, no-persist-on-failure, key-path GitOps deltas, authentication, and Onchain/EVM error lookup. `verify:live` remains mandatory in the deployment environment because it exercises real MongoDB, Redis, and LLM credentials.
 

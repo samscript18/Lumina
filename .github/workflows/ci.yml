@@ -16,5 +16,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - run: npm run sdk:pack
+      - run: npm run docs:validate
       - run: npm audit --omit=dev
       - run: docker build -t lumina:${{ github.sha }} .

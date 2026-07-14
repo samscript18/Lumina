@@ -2,8 +2,10 @@ import { All, Controller, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
 import { McpServerService } from './mcp-server.service';
+import { RequireScopes } from '../access/scopes.decorator';
 
 @UseGuards(ApiKeyGuard)
+@RequireScopes('mcp')
 @Controller('mcp')
 export class McpController {
   constructor(private readonly mcp: McpServerService) {}

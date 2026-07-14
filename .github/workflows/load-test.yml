@@ -1,0 +1,32 @@
+name: Production Load Test
+on:
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: Test duration
+        required: true
+        default: "60"
+      concurrency:
+        description: Concurrent workers
+        required: true
+        default: "10"
+permissions:
+  contents: read
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production-load-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci --ignore-scripts
+      - run: npm run load:test
+        env:
+          LUMINA_BASE_URL: https://lumina-e3vi.onrender.com
+          LOAD_PATH: /health
+          LOAD_DURATION_SECONDS: ${{ inputs.duration_seconds }}
+          LOAD_CONCURRENCY: ${{ inputs.concurrency }}
+          LOAD_MAX_P95_MS: "2500"
+          LOAD_MAX_ERROR_RATE: "0.01"

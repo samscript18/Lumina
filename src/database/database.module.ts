@@ -6,6 +6,7 @@ import { Web3Glossary, Web3GlossarySchema } from './schemas/web3-glossary.schema
 import { TranslationCacheRepository } from './repositories/translation-cache.repository';
 import { Web3GlossaryRepository } from './repositories/web3-glossary.repository';
 import { DatabaseIndexVerifierService } from './database-index-verifier.service';
+import { ApiCredential, ApiCredentialSchema } from '../access/api-credential.schema';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { DatabaseIndexVerifierService } from './database-index-verifier.service'
     MongooseModule.forFeature([
       { name: TranslationCache.name, schema: TranslationCacheSchema },
       { name: Web3Glossary.name, schema: Web3GlossarySchema },
+      { name: ApiCredential.name, schema: ApiCredentialSchema },
     ]),
   ],
   providers: [TranslationCacheRepository, Web3GlossaryRepository, DatabaseIndexVerifierService],

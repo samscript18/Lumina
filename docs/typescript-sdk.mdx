@@ -1,0 +1,39 @@
+---
+title: "TypeScript SDK"
+description: "Integrate Lumina with typed, server-safe TypeScript methods."
+---
+
+<Warning>The package is prepared for npm publication but must not be installed from npm until the release workflow publishes version `0.1.0`.</Warning>
+
+```bash
+npm install @lumina-ai/sdk
+```
+
+```ts
+import { LuminaClient } from '@lumina-ai/sdk';
+
+const lumina = new LuminaClient({
+  apiKey: process.env.LUMINA_API_KEY!,
+});
+
+const result = await lumina.translateText({
+  text: 'Swap {amount} ETH from {{wallet}}',
+  targetLanguage: 'pt-BR',
+});
+```
+
+The SDK provides `translateText`, `translateFile`, `decodeError`, `getQuote`, `glossary`, and `metrics`. Every method supports `AbortSignal` cancellation and an optional caller-supplied request ID.
+
+```ts
+import { LuminaApiError } from '@lumina-ai/sdk';
+
+try {
+  await lumina.decodeError({ code: '82000', targetLanguage: 'fr' });
+} catch (error) {
+  if (error instanceof LuminaApiError) {
+    console.error(error.status, error.code, error.requestId, error.retryable);
+  }
+}
+```
+
+Use the SDK only on a trusted backend, server action, worker, or agent runtime. Long-lived API keys must never enter a public browser bundle.
