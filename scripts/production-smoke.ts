@@ -1,4 +1,6 @@
 import * as dotenv from 'dotenv';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 dotenv.config({ path: process.env.ENV_FILE ?? '.env.local' });
 
 const baseUrl = (process.env.LUMINA_BASE_URL ?? 'https://lumina-e3vi.onrender.com').replace(/\/$/, '');
@@ -34,6 +36,10 @@ async function main() {
   }
   if (apiKey) {
     const headers = { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' };
+    await request('unauthenticated REST rejection', '/api/v1/glossary?term=wallet', {}, [401]);
+    await request('invalid bearer rejection', '/api/v1/glossary?term=wallet', {
+      headers: { authorization: 'Bearer lumina_invalid_production_probe' },
+    }, [401]);
     await request('authenticated glossary', '/api/v1/glossary?term=wallet', { headers });
     const translated = await (await request('translation', '/api/v1/translate/string', {
       method: 'POST', headers,
@@ -41,6 +47,23 @@ async function main() {
     })).json() as { data?: { translated?: string } };
     if (!translated.data?.translated?.includes('{amount}') || !translated.data.translated.includes('ETH')) {
       throw new Error('Translation token integrity failed');
+    }
+
+    const transport = new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`), {
+      requestInit: { headers: { authorization: `Bearer ${apiKey}` } },
+    });
+    const client = new Client({ name: 'lumina-production-monitor', version: '1.0.0' });
+    try {
+      await client.connect(transport);
+      const tools = await client.listTools();
+      const expectedTools = ['translate_text', 'decode_error', 'glossary_lookup'];
+      const discovered = new Set(tools.tools.map((tool) => tool.name));
+      for (const tool of expectedTools) {
+        if (!discovered.has(tool)) throw new Error(`MCP tool discovery is missing ${tool}`);
+      }
+      console.log(`mcp discovery: 200 (${expectedTools.join(', ')})`);
+    } finally {
+      await client.close().catch(() => undefined);
     }
   }
 }
