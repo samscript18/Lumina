@@ -1,0 +1,15 @@
+{
+  "product": {
+    "name": "ルミナ",
+    "tagline": "Web3を意識したアプリケーションおよびエージェントのローカリゼーション"
+  },
+  "translation": {
+    "swap": "{amount} ETH を {{wallet}} から交換",
+    "success": "取引が正常に提出されました",
+    "failure": "取引が完了できませんでした"
+  },
+  "actions": {
+    "retry": "再試してください",
+    "review": "取引の詳細を確認する"
+  }
+}
