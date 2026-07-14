@@ -20,8 +20,8 @@ describe('GitopsService', () => {
     });
     expect(translation.translateString).toHaveBeenCalledTimes(1);
     expect(translation.translateString).toHaveBeenCalledWith('New', 'fr');
-    expect(results[0].translated).toEqual({ a: 'Même', b: 'FR:New' });
-    expect(results[0].changedStringCount).toBe(1);
+    expect(results[0]!.translated).toEqual({ a: 'Même', b: 'FR:New' });
+    expect(results[0]!.changedStringCount).toBe(1);
   });
 
   it('skips a byte-identical file', async () => {
