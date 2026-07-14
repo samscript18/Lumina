@@ -1,13 +1,3 @@
-/**
- * Live verification script — run this from an environment that can actually
- * reach MongoDB Atlas, your Redis provider, and Groq (this sandbox's network
- * is locked to package registries only, so it can't run this itself).
- *
- * Usage:
- *   cp .env.example .env   # fill in real values
- *   npm install
- *   npx ts-node scripts/verify-live.ts
- */
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 dotenv.config();
