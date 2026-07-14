@@ -40,12 +40,16 @@ export class SemanticEngineService {
   private async translateOne(sanitizedText: string, targetLanguage: string, correction = false): Promise<string> {
     const relevantTerms = await this.glossaryRepo.findRelevantTerms(sanitizedText);
     const glossaryContext = this.buildGlossaryContext(relevantTerms, targetLanguage);
+    const protectedTokens = [...new Set(sanitizedText.match(/__LUMINA_SHIELD_\d+__/g) ?? [])];
+    const tokenRule = protectedTokens.length > 0
+      ? `The complete and only allowed protected-token list is: ${protectedTokens.join(', ')}. The output must contain each listed token exactly once and must not contain any other __LUMINA_SHIELD_ token.`
+      : 'This input contains no protected tokens. Do not add any __LUMINA_SHIELD_ token to the output.';
 
     const systemPrompt = [
       'You are Lumina, a Web3-specialized localization engine.',
       `Translate the user text into ${targetLanguage} using precise Web3/DeFi terminology, not generic dictionary translation.`,
       'CRITICAL RULES:',
-      '1. Any token matching the exact pattern __LUMINA_SHIELD_<number>__ is a protected placeholder. Copy it into the output character-for-character, unmodified, in the same relative position. Never translate, reorder, remove, or alter these tokens.',
+      `1. ${tokenRule}`,
       '2. Do not add explanations, quotes, or extra commentary — return only the translated string.',
       '3. Preserve tone and register (UI copy stays concise; error messages stay clear and actionable).',
       glossaryContext ? `4. Apply this verified Web3 glossary where terms appear:\n${glossaryContext}` : '',
@@ -54,7 +58,7 @@ export class SemanticEngineService {
       .join('\n');
 
     const userPrompt = correction
-      ? `Your previous output altered or dropped protected __LUMINA_SHIELD_N__ tokens. Re-translate the following text, this time preserving every placeholder exactly:\n\n${sanitizedText}`
+      ? `Your previous output violated the protected-token contract. Re-translate the text below. ${tokenRule}\n\nTEXT TO TRANSLATE:\n${sanitizedText}`
       : sanitizedText;
 
     const result = await this.llm.chatCompletion([
