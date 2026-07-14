@@ -22,7 +22,7 @@ services:
     build: .
     restart: unless-stopped
     env_file:
-      - path: .env
+      - path: ${ENV_FILE:-.env.local}
         required: true
     environment:
       NODE_ENV: production
