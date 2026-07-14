@@ -3,6 +3,22 @@
   "version": "0.1.0",
   "description": "Official TypeScript SDK for Lumina Web3 localization and onchain error intelligence",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samscript18/Lumina.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://samscript.mintlify.app/docs/typescript-sdk",
+  "bugs": {
+    "url": "https://github.com/samscript18/Lumina/issues"
+  },
+  "keywords": [
+    "web3",
+    "localization",
+    "typescript",
+    "sdk",
+    "mcp"
+  ],
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
