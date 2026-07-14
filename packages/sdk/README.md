@@ -17,3 +17,9 @@ const result = await lumina.translateText({
 ```
 
 Use the SDK from a trusted server or agent runtime. Never expose a long-lived Lumina API key in a browser bundle.
+
+## Publishing
+
+Publish locally with `npm publish --access public`. Trusted provenance is added
+only by Lumina's GitHub release workflow because npm cannot generate automatic
+provenance from a local terminal.

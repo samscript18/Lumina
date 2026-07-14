@@ -19,5 +19,5 @@
     "build": "tsc -p tsconfig.json",
     "prepack": "npm run build"
   },
-  "publishConfig": { "access": "public", "provenance": true }
+  "publishConfig": { "access": "public" }
 }
