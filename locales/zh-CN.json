@@ -1,0 +1,15 @@
+{
+  "product": {
+    "name": "Lumina",
+    "tagline": "面向应用和代理的Web3本地化"
+  },
+  "translation": {
+    "swap": "交换 {amount} ETH 从 {{wallet}}",
+    "success": "交易提交成功",
+    "failure": "交易无法完成"
+  },
+  "actions": {
+    "retry": "您需要我将某段文本翻译成简体中文（zh-CN），使用精确的Web3/DeFi术语。请提供需要翻译的文本。",
+    "review": "查看交易详情"
+  }
+}
