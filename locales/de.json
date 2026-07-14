@@ -1,0 +1,15 @@
+{
+  "product": {
+    "name": "Lumina",
+    "tagline": "Web3-awaree Lokalisierung für Anwendungen und Agenten"
+  },
+  "translation": {
+    "swap": "Tauchen Sie {amount} ETH von {{wallet}} aus",
+    "success": "Transaktion erfolgreich eingereicht",
+    "failure": "Die Transaktion konnte nicht abgeschlossen werden"
+  },
+  "actions": {
+    "retry": "Bitte versuchen Sie es erneut",
+    "review": "Transaktionsdetails überprüfen"
+  }
+}
