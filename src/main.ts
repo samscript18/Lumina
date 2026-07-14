@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger, ConsoleLogger } from '@nestjs/common';
+import { ValidationPipe, Logger, ConsoleLogger, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -39,7 +39,12 @@ async function bootstrap() {
     }),
   );
 
-  app.setGlobalPrefix('api/v1', { exclude: ['health'] });
+  app.setGlobalPrefix('api/v1', {
+    exclude: [
+      { path: 'health', method: RequestMethod.GET },
+      { path: 'health/ready', method: RequestMethod.GET },
+    ],
+  });
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Lumina API')
