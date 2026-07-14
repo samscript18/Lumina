@@ -27,7 +27,7 @@ Persistence (Mongo schemas/repositories for the translation cache and Web3 gloss
 
 Lumina exposes one deployed service through three integration surfaces:
 
-1. **AI agents — MCP Streamable HTTP:** connect to `https://api.example.com/mcp` with a bearer key, discover `translate_text`, `decode_error`, and `glossary_lookup`, and call them without a custom protocol adapter. This is the preferred OKX.AI integration.
+1. **AI agents — MCP Streamable HTTP:** connect to `https://lumina-e3vi.onrender.com/mcp` with a bearer key, discover `translate_text`, `decode_error`, and `glossary_lookup`, and call them without a custom protocol adapter. This is the preferred OKX.AI integration.
 2. **dApp backends — REST:** call the versioned `/api/v1` endpoints from a trusted server. Never embed `LUMINA_API_KEY` in public browser JavaScript.
 3. **GitHub automation:** send signed push events to `/api/v1/webhooks/github`. Lumina discovers changed source-locale files, generates localized artifacts, and opens a pull request.
 
@@ -65,7 +65,7 @@ REST successes use `{ "success": true, "data": ... }`; failures use `{ "success"
 
 ## MCP Server
 
-The preferred Streamable HTTP endpoint is `/mcp` (`POST`/`GET`/`DELETE`) on the same public NestJS port as REST and Swagger, which makes Cloud Run and reverse-proxy deployment seamless. Set `MCP_HTTP_ENABLED=false` in production to disable the optional separate legacy server. Local legacy SSE remains available on `MCP_HTTP_PORT` through `GET /sse` and `POST /messages?sessionId=...` when that server is enabled.
+The preferred Streamable HTTP endpoint is `/mcp` (`POST`/`GET`/`DELETE`) on the same public NestJS port as REST and Swagger, which works with Render's single public service port. Set `MCP_HTTP_ENABLED=false` in production to disable the optional separate legacy server. Local legacy SSE remains available on `MCP_HTTP_PORT` through `GET /sse` and `POST /messages?sessionId=...` when that server is enabled.
 
 - `translate_text(text, targetLanguage)`
 - `decode_error(code, targetLanguage?)`
@@ -78,7 +78,7 @@ This is the primary integration point for OKX.AI agents.
   "mcpServers": {
     "lumina": {
       "type": "streamable-http",
-      "url": "https://api.example.com/mcp",
+      "url": "https://lumina-e3vi.onrender.com/mcp",
       "headers": { "Authorization": "Bearer ${LUMINA_API_KEY}" }
     }
   }
@@ -124,7 +124,7 @@ Create a fine-grained GitHub token restricted to the repositories Lumina manages
 
 Configure the repository webhook as follows:
 
-- Payload URL: `https://api.example.com/api/v1/webhooks/github`
+- Payload URL: `https://lumina-e3vi.onrender.com/api/v1/webhooks/github`
 - Content type: `application/json`
 - Secret: the exact `GIT_WEBHOOK_SECRET`
 - SSL verification: enabled

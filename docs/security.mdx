@@ -1,0 +1,23 @@
+---
+title: "Security model"
+description: "Authentication, input integrity, and operational safeguards."
+---
+
+## Authentication boundaries
+
+- REST and MCP billable routes use bearer authentication.
+- Native GitHub webhooks use `X-Hub-Signature-256`, not the bearer key.
+- Health endpoints are intentionally public for Render probes.
+- Swagger describes the bearer scheme but never contains a real key.
+
+## Translation integrity
+
+Immutable tokens are removed from model-visible text and represented by deterministic shield placeholders. Every expected shield must survive unchanged. Missing, altered, or invented shields cause rejection; the pipeline never silently returns structurally unsafe output.
+
+## Secret handling
+
+Store all production credentials in Render environment variables. Never commit `.env`, paste keys into documentation, or place `LUMINA_API_KEY` in browser code.
+
+## Abuse protection
+
+Redis-backed limits coordinate request budgets across service replicas. Payload sizes and DTO schemas are validated, outbound requests time out, GitHub deliveries are idempotent, and application errors are normalized without leaking stack traces.

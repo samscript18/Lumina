@@ -1,0 +1,44 @@
+---
+title: "MCP integration"
+description: "Connect Lumina to OKX.AI and other Model Context Protocol clients."
+---
+
+Lumina exposes MCP Streamable HTTP at:
+
+```text
+https://lumina-e3vi.onrender.com/mcp
+```
+
+Send the bearer key with every MCP request.
+
+```json
+{
+  "mcpServers": {
+    "lumina": {
+      "type": "streamable-http",
+      "url": "https://lumina-e3vi.onrender.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${LUMINA_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+## Tools
+
+### `translate_text`
+
+Translates dApp copy while protecting structural tokens. Inputs: `text` and `targetLanguage`.
+
+### `decode_error`
+
+Converts an OKX OnchainOS or EVM error code into a localized actionable explanation. Inputs: `code` and optional `targetLanguage`.
+
+### `glossary_lookup`
+
+Returns a Web3 glossary entry and its verified localized mappings. Input: `term`.
+
+<Warning>
+  Do not expose the bearer key in a public frontend. Configure it in the agent platform's encrypted secrets or server environment.
+</Warning>

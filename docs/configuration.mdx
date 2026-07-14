@@ -1,0 +1,32 @@
+---
+title: "Configuration"
+description: "Environment variables required by the Render production service."
+---
+
+## Required in production
+
+| Variable | Purpose |
+| --- | --- |
+| `NODE_ENV=production` | Enables production validation and secure defaults |
+| `MONGODB_URI` | Durable translation cache and glossary |
+| `REDIS_URL` | Cache, locks, rate limiting, and webhook idempotency |
+| `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | Provider-agnostic translation model |
+| `LUMINA_API_KEY` or `LUMINA_API_KEYS` | Bearer credentials for protected routes |
+| `MCP_ALLOWED_HOSTS` | Allowed public MCP hosts; include `lumina-e3vi.onrender.com` |
+| `GIT_WEBHOOK_SECRET` | HMAC secret shared with GitHub |
+| `GITHUB_TOKEN` | Contents and pull-request access |
+| `OKX_API_KEY`, `OKX_API_SECRET`, `OKX_API_PASSPHRASE` | Live OnchainOS quote credentials |
+
+## Recommended Render values
+
+```text
+MCP_HTTP_ENABLED=false
+MCP_ALLOWED_HOSTS=lumina-e3vi.onrender.com
+CORS_ORIGINS=https://your-dapp.example
+GITHUB_TARGET_LANGUAGES=pt-BR,zh-CN,fr
+GITHUB_SOURCE_LOCALE=en
+GITHUB_OUTPUT_DIRECTORY=locales
+TRANSLATION_CACHE_TTL_SECONDS=2592000
+```
+
+Render supplies `PORT`; do not hardcode a competing production port.

@@ -51,5 +51,3 @@ docker-compose.override.yml
 tmp/
 temp/
 *.tmp
-
-.kite-passport/

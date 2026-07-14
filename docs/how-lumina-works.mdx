@@ -1,0 +1,43 @@
+---
+title: "How Lumina works"
+description: "Understand the translation pipeline, storage layers, and integration surfaces."
+---
+
+## Translation pipeline
+
+<Steps>
+  <Step title="Parse the source">
+    The Context Parser reads a string, JSON document, or static TS/JS i18n object and records each translatable leaf with its exact key path.
+  </Step>
+  <Step title="Shield immutable tokens">
+    The Immutability Guard replaces variables, template expressions, HTML/JSX tags, URLs, and token tickers with deterministic placeholders.
+  </Step>
+  <Step title="Resolve cached work">
+    Lumina checks Redis first and its MongoDB translation cache second. A distributed lock prevents duplicate LLM calls for simultaneous identical misses.
+  </Step>
+  <Step title="Translate with Web3 context">
+    The Semantic Engine adds relevant glossary mappings and sends only the shielded text to an OpenAI-compatible, environment-configured model provider.
+  </Step>
+  <Step title="Validate and restore">
+    The validator requires every shield token and valid structure. Invalid output receives one corrective retry, then fails loudly. Verified tokens are restored exactly.
+  </Step>
+  <Step title="Persist and return">
+    Valid translations are written through to MongoDB and Redis, then reconstructed into the original file shape.
+  </Step>
+</Steps>
+
+## Integration surfaces
+
+| Consumer | Interface | Best for |
+| --- | --- | --- |
+| dApp backend | REST `/api/v1` | Product UI translation, error decoding, glossary queries |
+| AI or OKX.AI agent | MCP `/mcp` | Tool discovery and typed agent calls |
+| GitHub repository | Signed webhook | Automatic locale updates through pull requests |
+
+## Production safety
+
+- Bearer authentication protects credit-spending REST and MCP calls.
+- HMAC-SHA256 signatures authenticate GitHub webhook payloads.
+- Redis coordinates rate limits, idempotency, caching, and distributed locks.
+- MongoDB keeps durable translations and the Web3 glossary.
+- Structured failures never return server stack traces.

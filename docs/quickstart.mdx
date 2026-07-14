@@ -1,0 +1,36 @@
+---
+title: "Quickstart"
+description: "Make your first authenticated Lumina translation request."
+---
+
+## Prerequisites
+
+Ask the Lumina operator for a bearer API key. Keep it on a trusted backend or in an agent secret store; never ship it in browser JavaScript.
+
+```bash
+export LUMINA_API_KEY="your-api-key"
+```
+
+## Translate a Web3 string
+
+```bash
+curl https://lumina-e3vi.onrender.com/api/v1/translate/string \
+  -H "Authorization: Bearer $LUMINA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Swap {amount} ETH from {{wallet}}","targetLanguage":"pt-BR"}'
+```
+
+The `{amount}`, `{{wallet}}`, and `ETH` tokens are restored exactly in the returned text.
+
+## Decode an onchain error
+
+```bash
+curl https://lumina-e3vi.onrender.com/api/v1/decode-error \
+  -H "Authorization: Bearer $LUMINA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"code":"82000","targetLanguage":"fr"}'
+```
+
+<Card title="Connect with MCP" icon="plug" href="/docs/mcp">
+  Let an AI agent discover and call Lumina tools directly.
+</Card>

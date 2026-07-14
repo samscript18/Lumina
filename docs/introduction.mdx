@@ -1,0 +1,28 @@
+---
+title: "Introduction"
+description: "Web3-aware localization infrastructure for dApps and AI agents."
+---
+
+Lumina translates dApp interfaces without corrupting the code-shaped values that make Web3 applications work. It protects variables, template expressions, tags, URLs, and token tickers before translation, restores them afterward, and rejects output that cannot be proven structurally safe.
+
+<CardGroup cols={3}>
+  <Card title="Translate safely" icon="language" href="/docs/rest-api">
+    Translate strings and complete JSON or static TypeScript/JavaScript locale files.
+  </Card>
+  <Card title="Connect agents" icon="robot" href="/docs/mcp">
+    Give agents three typed MCP tools over Streamable HTTP.
+  </Card>
+  <Card title="Automate GitHub" icon="code-branch" href="/docs/github-gitops">
+    Turn source-locale pushes into reviewable localization pull requests.
+  </Card>
+</CardGroup>
+
+## What Lumina solves
+
+Generic translation can rename `ETH`, alter `{amount}`, drop `{{wallet}}`, or damage JSX and URLs. Lumina isolates these tokens, adds Web3 glossary context, validates every model response, and only then returns or persists the translation.
+
+It also converts raw OKX OnchainOS and EVM failure codes into localized, actionable guidance, so users receive an explanation instead of an opaque execution error.
+
+<Note>
+  Production API: `https://lumina-e3vi.onrender.com`. Interactive Swagger is available at `/docs`.
+</Note>

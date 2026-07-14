@@ -1,0 +1,26 @@
+---
+title: "Render deployment"
+description: "Operate Lumina on its existing Render web service."
+---
+
+Lumina deploys as one NestJS web service. REST, Swagger, health probes, and MCP Streamable HTTP all share Render's assigned `PORT`.
+
+## Service settings
+
+```text
+Build command: npm ci && npm run build
+Start command: npm run start:prod
+Health check path: /health/ready
+```
+
+Set `MCP_HTTP_ENABLED=false`; the separate legacy SSE listener is unnecessary on Render because `/mcp` is handled by the primary NestJS server.
+
+## Release verification
+
+```bash
+curl https://lumina-e3vi.onrender.com/health
+curl https://lumina-e3vi.onrender.com/health/ready
+curl -I https://lumina-e3vi.onrender.com/docs
+```
+
+Then verify an authenticated REST translation, initialize MCP at `/mcp`, deliver a signed GitHub ping, and confirm metrics remain reachable with the bearer key.

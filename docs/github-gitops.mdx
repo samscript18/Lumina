@@ -1,0 +1,30 @@
+---
+title: "GitHub GitOps"
+description: "Generate locale updates automatically as reviewable pull requests."
+---
+
+## Configure GitHub
+
+Create a fine-grained token scoped to the managed repository with **Contents: read/write** and **Pull requests: read/write**. Configure it as `GITHUB_TOKEN` on Render.
+
+Create a repository webhook with:
+
+| Setting | Value |
+| --- | --- |
+| Payload URL | `https://lumina-e3vi.onrender.com/api/v1/webhooks/github` |
+| Content type | `application/json` |
+| Secret | Exact value of `GIT_WEBHOOK_SECRET` |
+| SSL verification | Enabled |
+| Event | Push only |
+
+## What happens on push
+
+<Steps>
+  <Step title="Verify and deduplicate">Lumina verifies the GitHub HMAC signature and claims the delivery ID in Redis.</Step>
+  <Step title="Find source changes">It compares commits and selects changed files matching `GITHUB_SOURCE_LOCALE`.</Step>
+  <Step title="Translate deltas">Only new or changed key paths pass through the protected translation pipeline.</Step>
+  <Step title="Create artifacts">Locale files are written beneath `GITHUB_OUTPUT_DIRECTORY` for every configured target language.</Step>
+  <Step title="Open a pull request">Lumina creates a dedicated branch and a reviewable PR. It never writes directly to the default branch.</Step>
+</Steps>
+
+Deliveries are idempotent: replaying the same `X-GitHub-Delivery` does not open another pull request.

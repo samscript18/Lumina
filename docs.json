@@ -1,0 +1,38 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "Lumina",
+  "description": "Web3-aware localization and onchain error intelligence for applications and agents",
+  "colors": {
+    "primary": "#7C3AED",
+    "light": "#8B5CF6",
+    "dark": "#6D28D9"
+  },
+  "favicon": "/favicon.svg",
+  "navbar": {
+    "links": [
+      { "label": "Swagger", "href": "https://lumina-e3vi.onrender.com/docs" },
+      { "label": "GitHub", "href": "https://github.com/samscript18/Lumina" }
+    ],
+    "primary": { "type": "button", "label": "Open API", "href": "https://lumina-e3vi.onrender.com/health" }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          { "group": "Start here", "pages": ["docs/introduction", "docs/how-lumina-works", "docs/quickstart"] },
+          { "group": "Integrate", "pages": ["docs/rest-api", "docs/mcp", "docs/github-gitops"] },
+          { "group": "Operate", "pages": ["docs/configuration", "docs/security", "docs/render-deployment"] }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "https://lumina-e3vi.onrender.com/docs-json"
+      }
+    ]
+  },
+  "footer": {
+    "socials": { "github": "https://github.com/samscript18/Lumina" }
+  }
+}

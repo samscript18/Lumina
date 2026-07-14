@@ -1,0 +1,32 @@
+---
+title: "REST integration"
+description: "Call Lumina from a trusted dApp backend."
+---
+
+Base URL: `https://lumina-e3vi.onrender.com/api/v1`
+
+All protected endpoints accept `Authorization: Bearer <LUMINA_API_KEY>`. Successful responses use `{ "success": true, "data": ... }`; errors use a stable `{ "success": false, "error": ... }` envelope.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /translate/string` | Translate one protected UI string |
+| `POST /translate/file` | Translate JSON or static TS/JS locale content |
+| `POST /decode-error` | Decode and localize an onchain error |
+| `POST /onchain/quote` | Request a live OKX OnchainOS quote |
+| `GET /glossary` | Query localized Web3 terminology |
+| `GET /metrics` | Read observed operational counters |
+
+## File translation
+
+```bash
+curl https://lumina-e3vi.onrender.com/api/v1/translate/file \
+  -H "Authorization: Bearer $LUMINA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content":"{\"swap\":{\"button\":\"Swap {amount} ETH\"}}",
+    "format":"json",
+    "targetLanguage":"zh-CN"
+  }'
+```
+
+See the **API Reference** tab for generated schemas and an interactive request builder.
