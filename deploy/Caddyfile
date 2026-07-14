@@ -1,0 +1,12 @@
+{$DOMAIN:localhost} {
+  encode zstd gzip
+
+  @mcp path /mcp /sse /messages*
+  handle @mcp {
+    reverse_proxy lumina:3100
+  }
+
+  handle {
+    reverse_proxy lumina:4000
+  }
+}

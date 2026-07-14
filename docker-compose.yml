@@ -1,0 +1,53 @@
+services:
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    volumes: [mongo-data:/data/db]
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --eval, "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: [redis-server, --appendonly, "yes"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  lumina:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongo:27017/lumina
+      REDIS_URL: redis://redis:6379
+    expose: ["${PORT:-4000}", "${MCP_HTTP_PORT:-3100}"]
+    depends_on:
+      mongo: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [lumina]
+volumes:
+  mongo-data:
+  redis-data:
+  caddy-data:
+  caddy-config:
