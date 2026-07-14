@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# NestJS / TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Tests and coverage
+coverage/
+.nyc_output/
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+
+# Logs and runtime files
+*.log
+logs/
+pids/
+*.pid
+*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Tool caches
+.eslintcache
+.cache/
+.npm/
+.yarn/
+.pnpm-store/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating systems
+.DS_Store
+Thumbs.db
+
+# Local Docker overrides and volumes
+docker-compose.override.yml
+.docker-data/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
