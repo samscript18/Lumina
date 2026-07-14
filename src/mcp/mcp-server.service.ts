@@ -64,7 +64,7 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
             transport.onclose = () => {
               if (transport?.sessionId) this.streamableTransports.delete(transport.sessionId);
             };
-            await this.buildServer().connect(transport);
+            await this.createServer().connect(transport);
           }
           if (!transport) {
             res.writeHead(400, { 'Content-Type': 'application/json' }).end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Missing or invalid MCP session' }, id: null }));
@@ -78,7 +78,7 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
           const transport = new SSEServerTransport('/messages', res);
           this.transportsBySession.set(transport.sessionId, transport);
           res.on('close', () => this.transportsBySession.delete(transport.sessionId));
-          await this.buildServer().connect(transport);
+          await this.createServer().connect(transport);
           return;
         }
 
@@ -112,7 +112,7 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async connectStdio(): Promise<void> {
-    await this.buildServer().connect(new StdioServerTransport());
+    await this.createServer().connect(new StdioServerTransport());
   }
 
   private authorize(req: http.IncomingMessage): boolean {
@@ -152,7 +152,7 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
     return Buffer.concat(chunks);
   }
 
-  private buildServer(): Server {
+  createServer(): Server {
     const server = new Server(
       { name: 'lumina', version: '0.1.0' },
       { capabilities: { tools: {} } },

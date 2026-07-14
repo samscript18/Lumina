@@ -23,7 +23,7 @@ export default [
   {
     files: ['src/**/*.spec.ts'],
     languageOptions: {
-      globals: { describe: 'readonly', it: 'readonly', expect: 'readonly', jest: 'readonly' },
+      globals: { describe: 'readonly', it: 'readonly', expect: 'readonly', jest: 'readonly', afterEach: 'readonly' },
     },
   },
   prettier,
