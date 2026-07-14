@@ -29,6 +29,7 @@
     "test": "jest --runInBand",
     "sdk:pack": "npm pack --workspace @lumina-ai/sdk --dry-run --cache .cache/npm",
     "docs:validate": "npm exec --yes --cache .cache/npm --package=mint@4.2.694 -- mint validate",
+    "docs:sync-openapi": "ts-node scripts/sync-openapi-docs.ts",
     "test:cov": "jest --coverage --runInBand"
   },
   "dependencies": {

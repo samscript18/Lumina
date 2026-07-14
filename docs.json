@@ -28,7 +28,7 @@
       },
       {
         "tab": "API Reference",
-        "openapi": "https://lumina-e3vi.onrender.com/docs-json"
+        "openapi": "openapi.json"
       }
     ]
   },

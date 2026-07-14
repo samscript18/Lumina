@@ -4,6 +4,7 @@ COPY package*.json ./
 RUN npm ci
 COPY nest-cli.json tsconfig*.json eslint.config.mjs ./
 COPY src ./src
+COPY packages ./packages
 RUN npm run typecheck && npm run build
 
 FROM node:22-alpine AS runtime

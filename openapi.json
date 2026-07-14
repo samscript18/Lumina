@@ -1,0 +1,538 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "HealthController_ready",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "operationId": "MetricsController_getMetrics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Metrics"
+        ]
+      }
+    },
+    "/api/v1/metrics/prometheus": {
+      "get": {
+        "operationId": "MetricsController_prometheus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Metrics"
+        ]
+      }
+    },
+    "/api/v1/admin/api-keys": {
+      "get": {
+        "operationId": "AdminApiKeysController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List API credentials without revealing secret values",
+        "tags": [
+          "API key administration"
+        ]
+      },
+      "post": {
+        "operationId": "AdminApiKeysController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApiKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an API credential; the plaintext key is returned exactly once",
+        "tags": [
+          "API key administration"
+        ]
+      }
+    },
+    "/api/v1/admin/api-keys/{id}/revoke": {
+      "post": {
+        "operationId": "AdminApiKeysController_revoke",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke an API credential immediately",
+        "tags": [
+          "API key administration"
+        ]
+      }
+    },
+    "/api/v1/admin/api-keys/{id}/rotate": {
+      "post": {
+        "operationId": "AdminApiKeysController_rotate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RotateApiKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a replacement credential and optionally revoke the old key",
+        "tags": [
+          "API key administration"
+        ]
+      }
+    },
+    "/api/v1/translate/string": {
+      "post": {
+        "operationId": "TranslationController_translateString",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslateStringDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Translate one protected Web3-aware UI string",
+        "tags": [
+          "Translation"
+        ]
+      }
+    },
+    "/api/v1/translate/file": {
+      "post": {
+        "operationId": "TranslationController_translateFile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslateFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Translate a structured localization file",
+        "tags": [
+          "Translation"
+        ]
+      }
+    },
+    "/api/v1/webhooks/git-sync": {
+      "post": {
+        "operationId": "GitopsController_gitSync",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitSyncDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Translate an explicitly supplied localization file tree",
+        "tags": [
+          "GitOps"
+        ]
+      }
+    },
+    "/api/v1/webhooks/github": {
+      "post": {
+        "operationId": "GitopsController_githubPush",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Receive a native signed GitHub push webhook and open a localization PR",
+        "tags": [
+          "GitOps"
+        ]
+      }
+    },
+    "/api/v1/decode-error": {
+      "post": {
+        "operationId": "ErrorInterpreterController_decode",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecodeErrorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decode and localize an OKX/EVM execution error",
+        "tags": [
+          "Onchain errors"
+        ]
+      }
+    },
+    "/api/v1/onchain/quote": {
+      "post": {
+        "operationId": "OnchainController_liveQuote",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Request a live OKX OnchainOS swap quote",
+        "tags": [
+          "OnchainOS"
+        ]
+      }
+    },
+    "/api/v1/glossary": {
+      "get": {
+        "operationId": "GlossaryController_lookup",
+        "parameters": [
+          {
+            "name": "term",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "domainContext",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Glossary"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Lumina API",
+    "description": "Web3 semantic localization, glossary, GitOps, and onchain error interpretation API",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "https://lumina-e3vi.onrender.com",
+      "description": "Production"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "CreateApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "production-dapp"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "translate",
+                "decode",
+                "quote",
+                "glossary",
+                "metrics",
+                "mcp",
+                "gitops",
+                "admin"
+              ]
+            }
+          },
+          "expiresAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "scopes"
+        ]
+      },
+      "RotateApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "revokeOld": {
+            "type": "object",
+            "default": false
+          }
+        },
+        "required": [
+          "revokeOld"
+        ]
+      },
+      "TranslateStringDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "example": "Swap {amount} ETH"
+          },
+          "targetLanguage": {
+            "type": "string",
+            "example": "pt-BR"
+          }
+        },
+        "required": [
+          "text",
+          "targetLanguage"
+        ]
+      },
+      "TranslateFileDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Complete JSON or static TS/JS i18n source"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "ts-i18n",
+              "js-i18n"
+            ]
+          },
+          "targetLanguage": {
+            "type": "string",
+            "example": "fr"
+          }
+        },
+        "required": [
+          "content",
+          "format",
+          "targetLanguage"
+        ]
+      },
+      "GitSyncDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "DecodeErrorDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "INSUFFICIENT_OUTPUT_AMOUNT"
+          },
+          "targetLanguage": {
+            "type": "string",
+            "example": "zh-CN"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "LiveQuoteDto": {
+        "type": "object",
+        "properties": {
+          "chainIndex": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "fromTokenAddress": {
+            "type": "string"
+          },
+          "toTokenAddress": {
+            "type": "string"
+          },
+          "swapMode": {
+            "type": "string",
+            "enum": [
+              "exactIn",
+              "exactOut"
+            ]
+          },
+          "targetLanguage": {
+            "type": "string",
+            "example": "fr"
+          }
+        },
+        "required": [
+          "chainIndex",
+          "amount",
+          "fromTokenAddress",
+          "toTokenAddress"
+        ]
+      }
+    }
+  }
+}
