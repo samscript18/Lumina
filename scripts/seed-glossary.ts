@@ -1,6 +1,9 @@
 import 'reflect-metadata';
+import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { Web3GlossarySchema } from '../src/database/schemas/web3-glossary.schema';
+
+dotenv.config();
 
 const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/lumina';
 
@@ -23,7 +26,7 @@ const SEED_TERMS: {
 ];
 
 async function main() {
-  console.log(`Connecting to ${MONGODB_URI} ...`);
+  console.log('Connecting to configured MongoDB ...');
   await mongoose.connect(MONGODB_URI);
   const Web3Glossary = mongoose.model('Web3Glossary', Web3GlossarySchema, 'web3_glossary');
 

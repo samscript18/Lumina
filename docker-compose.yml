@@ -28,7 +28,8 @@ services:
       NODE_ENV: production
       MONGODB_URI: mongodb://mongo:27017/lumina
       REDIS_URL: redis://redis:6379
-    expose: ["${PORT:-4000}", "${MCP_HTTP_PORT:-3100}"]
+      MCP_HTTP_ENABLED: "false"
+    expose: ["${PORT:-4000}"]
     depends_on:
       mongo: { condition: service_healthy }
       redis: { condition: service_healthy }

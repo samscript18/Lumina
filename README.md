@@ -65,7 +65,7 @@ REST successes use `{ "success": true, "data": ... }`; failures use `{ "success"
 
 ## MCP Server
 
-Runs alongside the HTTP API on `MCP_HTTP_PORT` (default `3100`). The preferred endpoint is Streamable HTTP at `/mcp` (`POST`/`GET`/`DELETE`); legacy SSE remains available through `GET /sse` and `POST /messages?sessionId=...`. Send the same bearer token on every request. Both paths enforce authentication, request-size limits, per-client rate limits, input schemas, and sanitized failures.
+The preferred Streamable HTTP endpoint is `/mcp` (`POST`/`GET`/`DELETE`) on the same public NestJS port as REST and Swagger, which makes Cloud Run and reverse-proxy deployment seamless. Set `MCP_HTTP_ENABLED=false` in production to disable the optional separate legacy server. Local legacy SSE remains available on `MCP_HTTP_PORT` through `GET /sse` and `POST /messages?sessionId=...` when that server is enabled.
 
 - `translate_text(text, targetLanguage)`
 - `decode_error(code, targetLanguage?)`

@@ -14,6 +14,7 @@ import { ErrorInterpreterService } from '../error-interpreter/error-interpreter.
 import { Web3GlossaryRepository } from '../database/repositories/web3-glossary.repository';
 import { MetricsService } from '../metrics/metrics.service';
 import { RedisService } from '../cache/redis.service';
+import { Request, Response } from 'express';
 
 /**
  * Exposes Lumina as an MCP server so third-party autonomous agents (including
@@ -54,23 +55,7 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
         if (url.pathname === '/mcp' && ['GET', 'POST', 'DELETE'].includes(req.method ?? '')) {
           const raw = await this.readBody(req);
           const body = raw.length ? JSON.parse(raw.toString('utf8')) : undefined;
-          const sessionId = typeof req.headers['mcp-session-id'] === 'string' ? req.headers['mcp-session-id'] : undefined;
-          let transport = sessionId ? this.streamableTransports.get(sessionId) : undefined;
-          if (!transport && req.method === 'POST' && isInitializeRequest(body)) {
-            transport = new StreamableHTTPServerTransport({
-              sessionIdGenerator: randomUUID,
-              onsessioninitialized: (id) => { this.streamableTransports.set(id, transport!); },
-            });
-            transport.onclose = () => {
-              if (transport?.sessionId) this.streamableTransports.delete(transport.sessionId);
-            };
-            await this.createServer().connect(transport);
-          }
-          if (!transport) {
-            res.writeHead(400, { 'Content-Type': 'application/json' }).end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Missing or invalid MCP session' }, id: null }));
-            return;
-          }
-          await transport.handleRequest(req as never, res as never, body);
+          await this.handleStreamableHttp(req as never, res as never, body);
           return;
         }
 
@@ -113,6 +98,29 @@ export class McpServerService implements OnModuleInit, OnModuleDestroy {
 
   async connectStdio(): Promise<void> {
     await this.createServer().connect(new StdioServerTransport());
+  }
+
+  async handleStreamableHttp(request: Request | http.IncomingMessage, response: Response | http.ServerResponse, body: unknown): Promise<void> {
+    const sessionHeader = request.headers['mcp-session-id'];
+    const sessionId = typeof sessionHeader === 'string' ? sessionHeader : undefined;
+    let transport = sessionId ? this.streamableTransports.get(sessionId) : undefined;
+    if (!transport && request.method === 'POST' && isInitializeRequest(body)) {
+      transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: randomUUID,
+        onsessioninitialized: (id) => { this.streamableTransports.set(id, transport!); },
+      });
+      transport.onclose = () => {
+        if (transport?.sessionId) this.streamableTransports.delete(transport.sessionId);
+      };
+      await this.createServer().connect(transport);
+    }
+    if (!transport) {
+      const error = { jsonrpc: '2.0', error: { code: -32000, message: 'Missing or invalid MCP session' }, id: null };
+      if ('status' in response && typeof response.status === 'function') response.status(400).json(error);
+      else response.writeHead(400, { 'Content-Type': 'application/json' }).end(JSON.stringify(error));
+      return;
+    }
+    await transport.handleRequest(request as Request, response as Response, body);
   }
 
   private authorize(req: http.IncomingMessage): boolean {

@@ -43,6 +43,7 @@ async function bootstrap() {
     exclude: [
       { path: 'health', method: RequestMethod.GET },
       { path: 'health/ready', method: RequestMethod.GET },
+      { path: 'mcp', method: RequestMethod.ALL },
     ],
   });
 
