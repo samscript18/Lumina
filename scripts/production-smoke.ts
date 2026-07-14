@@ -1,6 +1,4 @@
 import * as dotenv from 'dotenv';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 dotenv.config({ path: process.env.ENV_FILE ?? '.env.local' });
 
 const baseUrl = (process.env.LUMINA_BASE_URL ?? 'https://lumina-e3vi.onrender.com').replace(/\/$/, '');
@@ -22,6 +20,46 @@ async function alert(message: string): Promise<void> {
     body: JSON.stringify({ text: `Lumina production smoke failed: ${message}` }),
     signal: AbortSignal.timeout(10_000),
   }).catch(() => undefined);
+}
+
+function parseMcpResponse(body: string): { result?: { tools?: { name: string }[] } } {
+  const data = body.split('\n').find((line) => line.startsWith('data: '))?.slice(6) ?? body;
+  return JSON.parse(data) as { result?: { tools?: { name: string }[] } };
+}
+
+async function probeMcp(apiKey: string): Promise<void> {
+  const headers = {
+    authorization: `Bearer ${apiKey}`,
+    accept: 'application/json, text/event-stream',
+    'content-type': 'application/json',
+  };
+  const initialize = await request('mcp initialize', '/mcp', {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      jsonrpc: '2.0', id: 1, method: 'initialize',
+      params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'lumina-production-monitor', version: '1.0.0' } },
+    }),
+  });
+  parseMcpResponse(await initialize.text());
+  const sessionId = initialize.headers.get('mcp-session-id');
+  if (!sessionId) throw new Error('MCP initialize did not return a session ID');
+  const sessionHeaders = { ...headers, 'mcp-session-id': sessionId };
+  await request('mcp initialized notification', '/mcp', {
+    method: 'POST', headers: sessionHeaders,
+    body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
+  }, [200, 202]);
+  const listed = await request('mcp tool discovery', '/mcp', {
+    method: 'POST', headers: sessionHeaders,
+    body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+  });
+  const tools = parseMcpResponse(await listed.text()).result?.tools ?? [];
+  const expectedTools = ['translate_text', 'decode_error', 'glossary_lookup'];
+  const discovered = new Set(tools.map((tool) => tool.name));
+  for (const tool of expectedTools) {
+    if (!discovered.has(tool)) throw new Error(`MCP tool discovery is missing ${tool}`);
+  }
+  console.log(`mcp tools: ${expectedTools.join(', ')}`);
+  await request('mcp session close', '/mcp', { method: 'DELETE', headers: sessionHeaders }, [200, 204]);
 }
 
 async function main() {
@@ -49,22 +87,7 @@ async function main() {
       throw new Error('Translation token integrity failed');
     }
 
-    const transport = new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`), {
-      requestInit: { headers: { authorization: `Bearer ${apiKey}` } },
-    });
-    const client = new Client({ name: 'lumina-production-monitor', version: '1.0.0' });
-    try {
-      await client.connect(transport);
-      const tools = await client.listTools();
-      const expectedTools = ['translate_text', 'decode_error', 'glossary_lookup'];
-      const discovered = new Set(tools.tools.map((tool) => tool.name));
-      for (const tool of expectedTools) {
-        if (!discovered.has(tool)) throw new Error(`MCP tool discovery is missing ${tool}`);
-      }
-      console.log(`mcp discovery: 200 (${expectedTools.join(', ')})`);
-    } finally {
-      await client.close().catch(() => undefined);
-    }
+    await probeMcp(apiKey);
   }
 }
 
