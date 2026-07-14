@@ -23,6 +23,7 @@
         "groups": [
           { "group": "Start here", "pages": ["docs/introduction", "docs/how-lumina-works", "docs/quickstart"] },
           { "group": "Integrate", "pages": ["docs/typescript-sdk", "docs/rest-api", "docs/mcp", "docs/github-gitops"] },
+          { "group": "Production examples", "pages": ["docs/integrations/keetapay"] },
           { "group": "Operate", "pages": ["docs/configuration", "docs/api-keys", "docs/security", "docs/operations", "docs/render-deployment"] }
         ]
       },

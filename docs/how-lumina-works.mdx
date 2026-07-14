@@ -30,6 +30,7 @@ description: "Understand the translation pipeline, storage layers, and integrati
 
 | Consumer | Interface | Best for |
 | --- | --- | --- |
+| TypeScript service | `@lumina-ai/sdk` | Typed ESM or CommonJS integration from NestJS, workers, and server actions |
 | dApp backend | REST `/api/v1` | Product UI translation, error decoding, glossary queries |
 | AI or OKX.AI agent | MCP `/mcp` | Tool discovery and typed agent calls |
 | GitHub repository | Signed webhook | Automatic locale updates through pull requests |
@@ -41,3 +42,7 @@ description: "Understand the translation pipeline, storage layers, and integrati
 - Redis coordinates rate limits, idempotency, caching, and distributed locks.
 - MongoDB keeps durable translations and the Web3 glossary.
 - Structured failures never return server stack traces.
+
+<Card title="Walk through a real integration" icon="diagram-project" href="/docs/integrations/keetapay">
+  See how KeetaPay combines committed locale catalogs with SDK-powered dynamic error localization.
+</Card>
