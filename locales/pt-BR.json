@@ -1,0 +1,15 @@
+{
+  "product": {
+    "name": "Lumina",
+    "tagline": "Localização ciente de Web3 para aplicações e agentes"
+  },
+  "translation": {
+    "swap": "Troque {amount} ETH de {{wallet}}",
+    "success": "Transação enviada com sucesso",
+    "failure": "A transação não pôde ser concluída"
+  },
+  "actions": {
+    "retry": "Por favor, forneça o texto que você gostaria que eu traduzisse para pt-BR.",
+    "review": "Revisar detalhes da transação"
+  }
+}
