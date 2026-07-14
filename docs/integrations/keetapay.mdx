@@ -1,0 +1,174 @@
+---
+title: "KeetaPay integration"
+description: "A production-shaped NestJS and Next.js integration using the Lumina SDK, protected locale catalogs, and server-side error localization."
+---
+
+KeetaPay is a peer-to-peer KTA payment application on the Keeta testnet. It is a useful reference integration because its interface combines token symbols, usernames, wallet addresses, block explorer URLs, payment states, and raw blockchain failures—the exact values generic translation systems tend to damage.
+
+<CardGroup cols={3}>
+  <Card title="Four locales" icon="language">English, Brazilian Portuguese, Simplified Chinese, and French share one validated key structure.</Card>
+  <Card title="Server-only SDK" icon="shield-halved">The Lumina credential lives in NestJS and never enters the Next.js browser bundle.</Card>
+  <Card title="Safe failure fallback" icon="rotate-left">If localization is unavailable, KeetaPay returns the original actionable message instead of hiding the error.</Card>
+</CardGroup>
+
+## Integration architecture
+
+```mermaid
+flowchart LR
+  UI[Next.js payment UI] -->|Privy bearer token| API[KeetaPay NestJS API]
+  API -->|scoped Lumina key| SDK[@lumina-ai/sdk]
+  SDK --> L[Lumina API]
+  L --> G[Immutability Guard]
+  G --> V[Validator + glossary]
+  V --> API
+  C[locales/en.json] -->|signed GitHub push| W[Lumina GitOps]
+  W -->|reviewable pull request| T[pt-BR · zh-CN · fr]
+```
+
+The static interface is served from committed locale files. Runtime translation is reserved for dynamic backend failures, which avoids unnecessary LLM calls during normal page rendering.
+
+## 1. Install the SDK on the backend
+
+<Warning>
+  The public npm install becomes available after SDK version `0.1.0` is published. KeetaPay currently validates against the same packaged SDK through a local development link.
+</Warning>
+
+```bash
+cd backend
+npm install @lumina-ai/sdk
+```
+
+<Warning>
+  Do not install the SDK in browser-facing code. A long-lived Lumina credential must remain in a backend, worker, server action, or trusted agent runtime.
+</Warning>
+
+Create a Lumina consumer credential with only the `translate` scope, then configure KeetaPay's NestJS environment:
+
+```bash
+LUMINA_BASE_URL=https://lumina-e3vi.onrender.com
+LUMINA_API_KEY=lumina_live_replace_me
+```
+
+## 2. Create a NestJS adapter
+
+The adapter owns the SDK client, timeout policy, caller identity, and English fast path.
+
+```ts
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { LuminaClient } from '@lumina-ai/sdk';
+
+@Injectable()
+export class LuminaLocalizationService {
+  private readonly client?: LuminaClient;
+
+  constructor(config: ConfigService) {
+    const apiKey = config.get<string>('LUMINA_API_KEY')?.trim();
+    if (apiKey) {
+      this.client = new LuminaClient({
+        apiKey,
+        baseUrl: config.get<string>('LUMINA_BASE_URL'),
+        timeoutMs: 15_000,
+        maxRetries: 1,
+        userAgent: 'keetapay-backend/1.0.0'
+      });
+    }
+  }
+
+  async translateMessage(text: string, targetLanguage: string) {
+    if (targetLanguage === 'en') return {translated: text, source: 'source'};
+    if (!this.client) throw new ServiceUnavailableException('Lumina localization is not configured');
+
+    const result = await this.client.translateText({text, targetLanguage});
+    return {translated: result.translated, source: 'lumina'};
+  }
+}
+```
+
+<Note>
+  KeetaPay exposes this service through a Privy-authenticated endpoint with a 1,000-character limit and a fixed locale allowlist. This prevents an unauthenticated caller from spending translation credits.
+</Note>
+
+## 3. Keep the browser credential-free
+
+The browser sends the user's KeetaPay session token to its own backend. The backend—not the browser—calls Lumina.
+
+```ts
+const response = await fetch(`${API_URL}/localization/translate`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${privyToken}`
+  },
+  body: JSON.stringify({
+    text: 'Insufficient KTA balance for this transfer.',
+    targetLanguage: 'pt-BR'
+  })
+});
+```
+
+If the request times out, is rate-limited, or Lumina is not configured, KeetaPay displays the original English message. Payment completion never depends on translation availability.
+
+## 4. Structure static messages for GitOps
+
+Use semantic keys and ICU placeholders in the source catalog:
+
+```json
+{
+  "payment": {
+    "batchSubmitted": "{count} KTA payments were submitted.",
+    "recipientLoadFailed": "@{username} could not be loaded.",
+    "explorerResult": "Explorer: {url}"
+  }
+}
+```
+
+Lumina shields `{count}`, `{username}`, `{url}`, and `KTA` before the model receives the text. The validator rejects a translation if any required placeholder disappears or changes.
+
+<Tabs>
+  <Tab title="Português">
+    ```json
+    {"batchSubmitted":"{count} pagamentos em KTA foram enviados."}
+    ```
+  </Tab>
+  <Tab title="简体中文">
+    ```json
+    {"batchSubmitted":"已提交 {count} 笔 KTA 付款。"}
+    ```
+  </Tab>
+  <Tab title="Français">
+    ```json
+    {"batchSubmitted":"{count} paiements KTA ont été soumis."}
+    ```
+  </Tab>
+</Tabs>
+
+## 5. Connect GitHub automation
+
+Point the KeetaPay repository webhook at Lumina and keep `en.json` as the source locale.
+
+| Setting | Value |
+| --- | --- |
+| Endpoint | `https://lumina-e3vi.onrender.com/api/v1/webhooks/github` |
+| Source locale | `en` |
+| Target locales | `pt-BR,zh-CN,fr` |
+| Output directory | `frontend/messages` |
+| Event | Push |
+
+On every relevant push, Lumina isolates changed key paths, reuses cached translations, and opens a pull request instead of writing directly to the protected branch.
+
+## Production checklist
+
+- [x] Locale keys have identical structure across all four catalogs.
+- [x] Next.js production build renders every application route.
+- [x] NestJS imports the SDK through its CommonJS export.
+- [x] Runtime localization requires a valid Privy session.
+- [x] Input length and target locales are validated.
+- [x] Lumina failures fall back to the original message.
+- [ ] Replace the integration credential before its expiry and test rotation.
+- [ ] Enable the KeetaPay GitHub webhook after production deployment.
+
+<CardGroup cols={2}>
+  <Card title="Manage scoped keys" icon="key" href="/docs/api-keys">Create, rotate, and revoke a dedicated KeetaPay credential.</Card>
+  <Card title="Automate locale PRs" icon="code-pull-request" href="/docs/github-gitops">Configure signed, idempotent GitHub delivery.</Card>
+</CardGroup>

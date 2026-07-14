@@ -3,7 +3,11 @@ title: "TypeScript SDK"
 description: "Integrate Lumina with typed, server-safe TypeScript methods."
 ---
 
-<Warning>The package is prepared for npm publication but must not be installed from npm until the release workflow publishes version `0.1.0`.</Warning>
+The SDK ships ESM and CommonJS entry points with no runtime dependencies. Use it from Node.js 20+, including NestJS services compiled to CommonJS.
+
+<Warning>
+  Version `0.1.0` is ready to publish but is not yet available from the public npm registry. The command below works after the first release is published.
+</Warning>
 
 ```bash
 npm install @lumina-ai/sdk
@@ -37,3 +41,7 @@ try {
 ```
 
 Use the SDK only on a trusted backend, server action, worker, or agent runtime. Long-lived API keys must never enter a public browser bundle.
+
+<Card title="NestJS + Next.js example" icon="code" href="/docs/integrations/keetapay">
+  Build a server-only SDK adapter and translate dynamic payment failures without exposing a Lumina key to the browser.
+</Card>
