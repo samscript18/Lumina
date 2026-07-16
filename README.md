@@ -1,78 +1,157 @@
 # Lumina
 
-A Web3 semantic localization middleware that translates dApp localization files while preserving code integrity, integrating into GitHub workflows, and exposing translation services through MCP. Built for the OKX.AI Genesis Hackathon.
+**Web3-native semantic localization and onchain error intelligence for dApps and AI agents.**
+
+Lumina translates interface copy and localization files without corrupting placeholders, code fragments, token symbols, wallet addresses, or Web3 terminology. It also turns raw OKX/EVM errors into localized, actionable explanations and exposes the same capabilities through a TypeScript SDK, REST, MCP, and GitHub automation.
+
+[Live API](https://lumina-e3vi.onrender.com/health) · [Swagger](https://lumina-e3vi.onrender.com/docs) · [Mintlify documentation](https://samscript.mintlify.app/) · [TypeScript SDK](https://www.npmjs.com/package/@lumina-ai/sdk) · [GitHub](https://github.com/samscript18/Lumina)
+
+## What Lumina provides
+
+- **Protected localization:** shields variables, ICU-style placeholders, HTML, URLs, addresses, code, and token symbols before translation, then restores them exactly.
+- **Web3-aware meaning:** applies glossary context so protocol and financial terminology is translated consistently.
+- **Validated output:** rejects malformed structure, missing keys, damaged placeholders, and unsafe model output before it reaches users.
+- **Onchain error intelligence:** decodes known OKX/EVM errors locally and can localize the explanation through the semantic pipeline.
+- **GitOps localization:** processes signed GitHub push events, translates changed locale content, commits generated files to a branch, and opens a reviewable pull request.
+- **Agent-native access:** exposes Streamable HTTP MCP tools for direct use by AI agents and the OKX.AI ecosystem.
+- **Production access control:** supports a bootstrap environment key plus hashed, scoped, expiring, rotatable consumer credentials.
+
+## Current deployment
+
+| Surface | Address |
+|---|---|
+| Production API | `https://lumina-e3vi.onrender.com` |
+| Swagger/OpenAPI | `https://lumina-e3vi.onrender.com/docs` |
+| MCP | `https://lumina-e3vi.onrender.com/mcp` |
+| Mintlify docs | `https://samscript.mintlify.app/` |
+| npm package | `@lumina-ai/sdk` |
+| OKX.AI identity | Lumina ASP `#5891` |
+
+The Render service is the only production deployment described by this repository. MongoDB and Redis are required dependencies; the LLM layer accepts any OpenAI-compatible `/chat/completions` provider.
 
 ## Architecture
 
-8 modules, each independently testable, composed by `TranslationService` into one pipeline:
-
+```text
+Request
+  -> authentication + distributed rate limit
+  -> context parser
+  -> immutability shield
+  -> semantic translation engine
+  -> structural and placeholder validator
+  -> token restoration
+  -> Redis/MongoDB cache
+  -> REST, SDK, MCP, or GitOps response
 ```
-Context Parser → Immutability Guard → Semantic Engine → Validator → (unshield) → Cache write-through
-```
 
-| # | Module | Location |
-|---|--------|----------|
-| 1 | Context Parser | `src/parser` |
-| 2 | Immutability Guard | `src/shield` |
-| 3 | Semantic Translation Engine | `src/semantic` |
-| 4 | Translation Validator | `src/validator` |
-| 5 | GitOps Automation | `src/gitops` |
-| 6 | Redis Cache | `src/cache` |
-| 7 | Onchain Error Interpreter | `src/error-interpreter` |
-| 8 | MCP Server | `src/mcp` |
+| Module | Responsibility | Location |
+|---|---|---|
+| Access | Scoped API credentials and administration | `src/access` |
+| Parser | JSON and static TypeScript/JavaScript i18n parsing | `src/parser` |
+| Shield | Immutable token detection and restoration | `src/shield` |
+| Semantic engine | Provider-agnostic LLM translation | `src/semantic` |
+| Validator | Structural and placeholder integrity checks | `src/validator` |
+| Cache | Redis hot cache and distributed locking | `src/cache` |
+| Database | Durable translations, glossary, and credentials | `src/database` |
+| GitOps | Explicit sync requests and GitHub pull requests | `src/gitops` |
+| Error interpreter | Static decoding and live OKX quotes | `src/error-interpreter` |
+| MCP | Streamable HTTP, legacy SSE, and stdio transports | `src/mcp` |
+| Metrics | JSON and Prometheus counters | `src/metrics` |
 
-Persistence (Mongo schemas/repositories for the translation cache and Web3 glossary) lives in `src/database`.
+Lumina remains a NestJS, TypeScript, MongoDB, and Redis application. No alternate backend framework or database is required.
 
-## How Web3 applications and agents use Lumina
+## Integration options
 
-Lumina exposes one deployed service through three integration surfaces:
+| Consumer | Recommended interface | Why |
+|---|---|---|
+| NestJS/Node.js backend | TypeScript SDK | Typed methods, timeouts, cancellation, request IDs, and normalized errors |
+| AI agent or OKX.AI ASP | MCP | Tool discovery and structured calls without a custom adapter |
+| Any trusted backend | REST | Stable, versioned HTTP contract with Swagger |
+| GitHub repository | Signed webhook | Automatic locale updates through pull requests |
 
-1. **TypeScript applications — SDK:** use the typed `@lumina-ai/sdk` workspace package from a trusted backend, worker, or server action.
-2. **AI agents — MCP Streamable HTTP:** connect to `https://lumina-e3vi.onrender.com/mcp` with a bearer key, discover `translate_text`, `decode_error`, and `glossary_lookup`, and call them without a custom protocol adapter. This is the preferred OKX.AI integration.
-3. **dApp backends — REST:** call the versioned `/api/v1` endpoints from a trusted server. Never embed a Lumina API key in public browser JavaScript.
-4. **GitHub automation:** send signed push events to `/api/v1/webhooks/github`. Lumina discovers changed source-locale files, generates localized artifacts, and opens a pull request.
+Long-lived Lumina keys belong in a backend, worker, server action, or agent secret store. Never include them in public browser bundles.
 
-Interactive Swagger/OpenAPI documentation is served at `/docs`.
+## TypeScript SDK quickstart
 
-## Setup
+The public SDK supports Node.js 20+, ESM, and CommonJS with no runtime dependencies.
 
 ```bash
-cp .env.example .env   # fill in LLM_API_KEY (or GROQ_API_KEY) + MONGODB_URI + REDIS_URL at minimum
-npm install
-npm run verify:live    # confirms Mongo/Redis/LLM are all actually reachable before you go further
-npm run seed:glossary  # populate starter Web3 glossary terms
-npm run start:dev
+npm install @lumina-ai/sdk
 ```
 
-Requires a running MongoDB (`MONGODB_URI`) and Redis (`REDIS_URL` for TLS providers like Upstash, or discrete `REDIS_HOST`/`REDIS_PORT`) instance. The LLM provider is configured via `LLM_BASE_URL` / `LLM_API_KEY` (or `GROQ_API_KEY` as an alias) / `LLM_MODEL` and is provider-agnostic — any OpenAI-compatible `/chat/completions` endpoint works.
+```ts
+import { LuminaClient } from '@lumina-ai/sdk';
 
-Set `LUMINA_API_KEY` before deploying anywhere reachable by the public. In `NODE_ENV=production`, protected REST routes and MCP HTTP reject all traffic until it is configured. Development remains open when the key is unset.
+const lumina = new LuminaClient({
+  apiKey: process.env.LUMINA_API_KEY!,
+});
 
-Production also requires `MCP_ALLOWED_HOSTS` and an explicit `CORS_ORIGINS` allowlist when browser access is needed.
+const result = await lumina.translateText({
+  text: 'Swap {amount} ETH from {{wallet}}',
+  targetLanguage: 'pt-BR',
+});
 
-## REST API (prefix `/api/v1`)
+console.log(result.translated);
+```
 
-- `POST /translate/string` — `{ text, targetLanguage }` → `{ translated }`
-- `POST /translate/file` — `{ content, format: 'json'|'ts-i18n'|'js-i18n', targetLanguage }` → translated file + pipeline stats
-- `POST /webhooks/git-sync` — GitOps entry point; diffs and translates only changed strings across one or more files/languages
-- `POST /webhooks/github` — native signed GitHub push webhook; does not require the bearer key
-- `POST /decode-error` — `{ code, targetLanguage? }` → plain-language, localized onchain error explanation
-- `GET /glossary?term=...` or `?domainContext=...` — glossary lookup/listing
-- `GET /metrics` — authenticated, process-local operational counters
-- `GET /health` — unauthenticated health check (outside the `/api/v1` prefix)
-- `GET /health/ready` — MongoDB/Redis readiness probe
+Available methods are `translateText`, `translateFile`, `decodeError`, `getQuote`, `glossary`, `metrics`, and `mcpServerConfig`. See the [SDK guide](https://samscript.mintlify.app/docs/typescript-sdk) for error handling and the [KeetaPay integration](https://samscript.mintlify.app/docs/integrations/keetapay) for a production NestJS example.
 
-REST successes use `{ "success": true, "data": ... }`; failures use `{ "success": false, "error": { "statusCode", "code", "message" }, "timestamp" }`.
+## REST quickstart
 
-## MCP Server
+All billable and operational routes require a bearer key in production.
 
-The preferred Streamable HTTP endpoint is `/mcp` (`POST`/`GET`/`DELETE`) on the same public NestJS port as REST and Swagger, which works with Render's single public service port. Set `MCP_HTTP_ENABLED=false` in production to disable the optional separate legacy server. Local legacy SSE remains available on `MCP_HTTP_PORT` through `GET /sse` and `POST /messages?sessionId=...` when that server is enabled.
+```bash
+export LUMINA_API_KEY="your-consumer-key"
+
+curl https://lumina-e3vi.onrender.com/api/v1/translate/string \
+  -H "Authorization: Bearer $LUMINA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Swap {amount} ETH from {{wallet}}","targetLanguage":"fr"}'
+```
+
+Successful REST calls use:
+
+```json
+{ "success": true, "data": {} }
+```
+
+Failures use:
+
+```json
+{
+  "success": false,
+  "error": { "statusCode": 400, "code": "VALIDATION_ERROR", "message": "..." },
+  "timestamp": "..."
+}
+```
+
+### API routes
+
+| Method | Route | Scope | Purpose |
+|---|---|---|---|
+| `POST` | `/api/v1/translate/string` | `translate` | Translate one protected string |
+| `POST` | `/api/v1/translate/file` | `translate` | Translate JSON or static TS/JS i18n content |
+| `POST` | `/api/v1/decode-error` | `decode` | Decode and optionally localize an OKX/EVM error |
+| `POST` | `/api/v1/onchain/quote` | `quote` | Request a live OKX OnchainOS swap quote |
+| `GET` | `/api/v1/glossary` | `glossary` | Look up a term or list entries by domain context |
+| `POST` | `/api/v1/webhooks/git-sync` | `gitops` | Translate an explicitly supplied localization tree |
+| `POST` | `/api/v1/webhooks/github` | GitHub signature | Process a native push event and open a localization PR |
+| `GET` | `/api/v1/metrics` | `metrics` | Return JSON process counters |
+| `GET` | `/api/v1/metrics/prometheus` | `metrics` | Return Prometheus-format counters |
+| `GET/POST/DELETE` | `/mcp` | `mcp` | Streamable HTTP MCP transport |
+| `GET` | `/health` | Public | Liveness probe |
+| `GET` | `/health/ready` | Public | MongoDB and Redis readiness probe |
+
+The administration routes under `/api/v1/admin/api-keys` require the `admin` scope and support listing, creation, rotation, and revocation. Full schemas and examples are available in [Swagger](https://lumina-e3vi.onrender.com/docs).
+
+## MCP for AI agents
+
+Lumina exposes these tools:
 
 - `translate_text(text, targetLanguage)`
 - `decode_error(code, targetLanguage?)`
 - `glossary_lookup(term)`
 
-This is the primary integration point for OKX.AI agents.
+Streamable HTTP configuration:
 
 ```json
 {
@@ -80,75 +159,119 @@ This is the primary integration point for OKX.AI agents.
     "lumina": {
       "type": "streamable-http",
       "url": "https://lumina-e3vi.onrender.com/mcp",
-      "headers": { "Authorization": "Bearer ${LUMINA_API_KEY}" }
+      "headers": {
+        "Authorization": "Bearer ${LUMINA_API_KEY}"
+      }
     }
   }
 }
 ```
 
-For local MCP clients that use stdio:
+For a local stdio client:
 
 ```bash
 npm run build
 npm run start:mcp:stdio
 ```
 
-## Design notes
+The separate legacy HTTP/SSE server is optional. Disable it with `MCP_HTTP_ENABLED=false` when using the same-port `/mcp` endpoint, as on Render.
 
-- **Provider-agnostic LLM client** (`src/semantic/llm-client.service.ts`): swapping LLM vendors is an env-var change, not a code change.
-- **Two-tier cache**: Redis for hot-path latency, MongoDB `TranslationCache` for durability across Redis restarts/eviction — both keyed on `MD5(sourceText::targetLanguage)`. `RedisService` accepts either a full `REDIS_URL` connection string (required for TLS providers like Upstash) or discrete host/port/password.
-- **Stampede protection**: a Redis distributed lock ensures concurrent identical cache misses produce one LLM request.
-- **Distributed rate limiting**: REST and MCP budgets are coordinated through Redis across replicas.
-- **Fail loudly, not silently**: a dropped placeholder token or a malformed LLM response triggers one corrective retry, then a hard error — Lumina never ships a translation it can't verify.
-- **TS/JS i18n parsing** uses the TypeScript AST and accepts static object/array/scalar literals only. Repository code is never evaluated; dynamic expressions, spreads, getters, computed keys, and prototype-sensitive keys are rejected.
-- **Key-path GitOps diffing**: `GitopsService` compares previous/current values by structural key path. Include `previousTranslatedContent: { "fr": "..." }` for each file to reuse unchanged localized values and translate only changed/new paths. Without a prior localized artifact, Lumina deliberately performs one complete translation so it never emits a mixed-language file.
-- **API key auth**: `ApiKeyGuard` gates the billable endpoints (`/translate/*`, `/decode-error`, `/webhooks/git-sync`) behind `LUMINA_API_KEY` when set; a no-op locally if unset.
-- **Consumer credential lifecycle**: production consumers can use hashed, scoped MongoDB credentials with expiry, rotation, revocation, last-use timestamps, and usage counters. The environment key remains the bootstrap administration credential.
-- **Global exception filter**: every unhandled error is normalized to a clean JSON error response server-side; stack traces are logged, never returned to callers.
+## Languages
 
-## Production checks
+Lumina does not maintain a hardcoded finite language list. Translation routes accept standard two- or three-letter language codes with an optional regional/script subtag, such as `fr`, `pt-BR`, or `zh-CN`. Actual fluency depends on the configured LLM and available glossary context.
+
+The default GitHub automation targets `pt-BR`, `zh-CN`, and `fr`; change `GITHUB_TARGET_LANGUAGES` to configure a different comma-separated set. Those defaults are deployment choices, not Lumina's language limit.
+
+## API keys and scopes
+
+Production supports two credential layers:
+
+1. `LUMINA_API_KEY` or `LUMINA_API_KEYS` provides bootstrap administration access and carries all scopes.
+2. Consumer keys are generated through `/api/v1/admin/api-keys`, stored only as SHA-256 hashes, and assigned the minimum required scopes.
+
+Available scopes are `translate`, `decode`, `quote`, `glossary`, `metrics`, `mcp`, `gitops`, and `admin`. Plaintext consumer keys are returned once at creation or rotation; store them immediately in the consumer's deployment secret manager.
+
+## Local development
+
+Requirements: Node.js 22 for the application toolchain, MongoDB, and Redis.
+
+```bash
+npm install
+cp .env.example .env
+# Fill in MongoDB, Redis, LLM, and security values.
+npm run verify:live
+npm run seed:glossary
+npm run start:dev
+```
+
+NestJS loads `.env` for direct local commands. Docker Compose uses `.env.local` by default:
+
+```bash
+cp .env.example .env.local
+docker compose up --build
+```
+
+Use either `REDIS_URL`—including `rediss://` for TLS providers such as Upstash—or the discrete `REDIS_HOST`, `REDIS_PORT`, and `REDIS_PASSWORD` values. `REDIS_URL` takes precedence.
+
+The LLM client is configured with `LLM_BASE_URL`, `LLM_API_KEY` (or `GROQ_API_KEY`), and `LLM_MODEL`. Changing providers is an environment update when the provider supports OpenAI-compatible chat completions.
+
+## GitHub localization automation
+
+Configure a fine-grained GitHub token for each managed repository with:
+
+- **Contents:** read and write
+- **Pull requests:** read and write
+
+Set `GITHUB_TOKEN`, `GITHUB_TARGET_LANGUAGES`, `GITHUB_SOURCE_LOCALE`, `GITHUB_OUTPUT_DIRECTORY`, and `GIT_WEBHOOK_SECRET`. Then create a push-only webhook:
+
+| GitHub setting | Value |
+|---|---|
+| Payload URL | `https://lumina-e3vi.onrender.com/api/v1/webhooks/github` |
+| Content type | `application/json` |
+| Secret | Exact value of `GIT_WEBHOOK_SECRET` |
+| SSL verification | Enabled |
+| Events | Push only |
+
+Deliveries are deduplicated with `X-GitHub-Delivery`. Lumina writes generated locale files to a branch and opens a pull request; it does not push directly to a protected default branch.
+
+## Production verification
 
 ```bash
 npm run check
 npm audit --omit=dev
-npm run verify:live
-npm run verify:production
 npm run sdk:pack
 npm run docs:validate
+npm run verify:live
+npm run verify:production
 ```
 
-Operational workflows cover scheduled smoke monitoring, protected load tests, runtime dependency and container scanning, encrypted S3-compatible MongoDB backups, restore verification, and Render artifact rollback. See `docs/operations.mdx` for required secrets and safety gates.
+- `check` runs linting, TypeScript checking, tests, and production builds.
+- `verify:live` tests real MongoDB, Redis, and LLM credentials.
+- `verify:production` probes the deployed health, readiness, Swagger, REST authentication, and MCP surfaces.
+- CI also builds the Docker image and scans application dependencies, the filesystem, and the container for high/critical vulnerabilities.
 
-The automated suite covers parser extraction/lossless no-op round trips, adversarial nested shielding, validator rejection, corrective retry, no-persist-on-failure, key-path GitOps deltas, authentication, and Onchain/EVM error lookup. `verify:live` remains mandatory in the deployment environment because it exercises real MongoDB, Redis, and LLM credentials.
+The production image runs as a non-root user with a readiness health check. Docker Compose additionally uses a read-only application filesystem, a temporary `/tmp`, and `no-new-privileges`.
 
-Mongo indexes are created and inspected at startup; startup fails if the required unique `stringHash` or glossary `term` index is missing. Translation metrics report only observed process counters—no estimated cost or fabricated performance numbers.
+## Reliability and safety
 
-Authenticated Prometheus-format metrics are served at `/api/v1/metrics/prometheus`; JSON counters remain available at `/api/v1/metrics`.
+- Redis distributed locks prevent translation-cache stampedes across replicas.
+- MongoDB provides durable cache fallback when Redis entries expire or are evicted.
+- Static TypeScript/JavaScript locale parsing never evaluates repository code.
+- Dynamic expressions, getters, spreads, computed keys, and prototype-sensitive keys are rejected.
+- A failed placeholder or structural validation receives one corrective model retry, then fails loudly.
+- Request payloads, outbound calls, and distributed rate limits are bounded.
+- Stack traces remain server-side; clients receive normalized error envelopes.
+- Required MongoDB indexes are verified during startup.
 
-## GitHub automation
+## Documentation
 
-Create a fine-grained GitHub token restricted to the repositories Lumina manages, with **Contents: read/write** and **Pull requests: read/write**. Configure `GITHUB_TOKEN`, `GITHUB_TARGET_LANGUAGES`, and `GITHUB_SOURCE_LOCALE`.
+- [How Lumina works](https://samscript.mintlify.app/docs/how-lumina-works)
+- [Quickstart](https://samscript.mintlify.app/docs/quickstart)
+- [REST API](https://samscript.mintlify.app/docs/rest-api)
+- [MCP integration](https://samscript.mintlify.app/docs/mcp)
+- [GitHub GitOps](https://samscript.mintlify.app/docs/github-gitops)
+- [TypeScript SDK](https://samscript.mintlify.app/docs/typescript-sdk)
 
-Configure the repository webhook as follows:
+## License
 
-- Payload URL: `https://lumina-e3vi.onrender.com/api/v1/webhooks/github`
-- Content type: `application/json`
-- Secret: the exact `GIT_WEBHOOK_SECRET`
-- SSL verification: enabled
-- Event: push only
-
-Deliveries are deduplicated using `X-GitHub-Delivery`. Generated changes always go through a pull request; Lumina never writes directly to the default branch.
-
-## Container deployment
-
-`Dockerfile` builds a non-root production image. For a local production-shaped stack:
-
-```bash
-cp .env.example .env
-# Set LUMINA_API_KEY and LLM_API_KEY in .env
-docker compose up --build
-```
-
-Do not use plain `docker compose config` with a populated `.env`, because Docker renders environment values into terminal output. If configuration inspection is necessary, use `docker compose config --no-env-resolution` and review the output before sharing it.
-
-Terminate TLS at the deployment load balancer or reverse proxy. Do not expose MongoDB or Redis publicly.
+MIT
