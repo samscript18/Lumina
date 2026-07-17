@@ -9,7 +9,7 @@ Lumina exposes MCP Streamable HTTP at:
 https://lumina-e3vi.onrender.com/mcp
 ```
 
-Send the bearer key with every MCP request.
+Trusted consumers can send a bearer key with every MCP request.
 
 ```json
 {
@@ -24,6 +24,24 @@ Send the bearer key with every MCP request.
   }
 }
 ```
+
+## OKX.AI payment access
+
+Marketplace callers without a bearer key receive a standard x402 v2 `402 Payment Required` response. The `PAYMENT-REQUIRED` header contains the payment challenge for X Layer. After payment, the caller replays the request and receives the MCP response with settlement proof.
+
+Bearer authentication remains available for existing SDK and operator integrations. A verified x402 payment grants access only to MCP and cannot be used for REST or administration routes.
+
+Production configuration:
+
+```bash
+X402_ENABLED=true
+X402_NETWORK=eip155:196
+X402_PRICE_USD=$0.01
+X402_PAY_TO_ADDRESS=0xYourReceivingAddress
+X402_RESOURCE_URL=https://lumina-e3vi.onrender.com/mcp
+```
+
+Lumina uses the official OKX payment packages for challenge generation, verification, replay protection, and settlement.
 
 ## Tools
 

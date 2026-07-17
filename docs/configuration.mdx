@@ -16,6 +16,11 @@ description: "Environment variables required by the Render production service."
 | `GIT_WEBHOOK_SECRET` | HMAC secret shared with GitHub |
 | `GITHUB_TOKEN` | Contents and pull-request access |
 | `OKX_API_KEY`, `OKX_API_SECRET`, `OKX_API_PASSPHRASE` | Live OnchainOS quote credentials |
+| `X402_ENABLED` | Enable paid marketplace access on `POST /mcp` |
+| `X402_NETWORK` | CAIP-2 settlement network; production uses `eip155:196` |
+| `X402_PRICE_USD` | Positive per-request USD price, for example `$0.01` |
+| `X402_PAY_TO_ADDRESS` | EVM wallet that receives x402 settlement |
+| `X402_RESOURCE_URL` | Exact public MCP URL advertised in the challenge |
 
 ## Recommended Render values
 

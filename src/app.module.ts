@@ -17,6 +17,7 @@ import { McpModule } from './mcp/mcp.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { DistributedRateLimitGuard } from './common/guards/distributed-rate-limit.guard';
 import { AccessModule } from './access/access.module';
+import { X402PaymentService } from './payments/x402-payment.service';
 
 @Module({
   imports: [
@@ -36,6 +37,6 @@ import { AccessModule } from './access/access.module';
     McpModule,
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: DistributedRateLimitGuard }],
+  providers: [X402PaymentService, { provide: APP_GUARD, useClass: DistributedRateLimitGuard }],
 })
 export class AppModule {}

@@ -7,7 +7,8 @@ import { ApiCredentialService } from '../../access/api-credential.service';
 import { REQUIRED_SCOPES } from '../../access/scopes.decorator';
 
 export interface AuthenticatedRequest extends Request {
-  luminaCredential?: { id?: string; name: string; prefix: string; scopes: string[]; source: 'environment' | 'database' };
+  luminaCredential?: { id?: string; name: string; prefix: string; scopes: string[]; source: 'environment' | 'database' | 'x402' };
+  luminaPayment?: { protocol: 'x402'; network: string };
 }
 
 /**
@@ -37,6 +38,15 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    if (req.luminaPayment?.protocol === 'x402') {
+      const requiredScopes = this.reflector.getAllAndOverride<string[]>(REQUIRED_SCOPES, [context.getHandler(), context.getClass()]) ?? [];
+      if (requiredScopes.some((scope) => scope !== 'mcp')) {
+        throw new ForbiddenException('x402 payment grants access only to the MCP service.');
+      }
+      req.luminaCredential = { name: 'x402-payer', prefix: 'x402', scopes: ['mcp'], source: 'x402' };
+      return true;
+    }
+
     const header = req.headers['authorization'];
     const provided = typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : undefined;
 

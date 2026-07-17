@@ -35,6 +35,13 @@ export interface LuminaConfig {
     apiSecret?: string;
     passphrase?: string;
   };
+  x402: {
+    enabled: boolean;
+    network: string;
+    price: string;
+    payToAddress?: string;
+    resourceUrl: string;
+  };
 }
 
 export default (): LuminaConfig => ({
@@ -73,6 +80,13 @@ export default (): LuminaConfig => ({
     apiSecret: process.env.OKX_API_SECRET || undefined,
     passphrase: process.env.OKX_API_PASSPHRASE || undefined,
   },
+  x402: {
+    enabled: process.env.X402_ENABLED === 'true',
+    network: process.env.X402_NETWORK ?? 'eip155:196',
+    price: process.env.X402_PRICE_USD ?? '$0.01',
+    payToAddress: process.env.X402_PAY_TO_ADDRESS || undefined,
+    resourceUrl: process.env.X402_RESOURCE_URL ?? 'https://lumina-e3vi.onrender.com/mcp',
+  },
 });
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
@@ -85,6 +99,9 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
   if (!String(environment.REDIS_URL ?? environment.REDIS_HOST ?? '').trim()) missing.push('REDIS_URL');
   if (!String(environment.LLM_API_KEY ?? environment.GROQ_API_KEY ?? '').trim()) missing.push('LLM_API_KEY');
   if (!String(environment.LUMINA_API_KEYS ?? environment.LUMINA_API_KEY ?? '').trim()) missing.push('LUMINA_API_KEY');
+  if (environment.X402_ENABLED === 'true' && !String(environment.X402_PAY_TO_ADDRESS ?? '').trim()) {
+    missing.push('X402_PAY_TO_ADDRESS');
+  }
   if (missing.length > 0) throw new Error(`Missing required production environment variables: ${missing.join(', ')}`);
   return environment;
 }

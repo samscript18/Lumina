@@ -137,7 +137,7 @@ Failures use:
 | `POST` | `/api/v1/webhooks/github` | GitHub signature | Process a native push event and open a localization PR |
 | `GET` | `/api/v1/metrics` | `metrics` | Return JSON process counters |
 | `GET` | `/api/v1/metrics/prometheus` | `metrics` | Return Prometheus-format counters |
-| `GET/POST/DELETE` | `/mcp` | `mcp` | Streamable HTTP MCP transport |
+| `GET/POST/DELETE` | `/mcp` | `mcp` or x402 | Streamable HTTP MCP transport |
 | `GET` | `/health` | Public | Liveness probe |
 | `GET` | `/health/ready` | Public | MongoDB and Redis readiness probe |
 
@@ -167,6 +167,13 @@ Streamable HTTP configuration:
 }
 ```
 
+Lumina supports two server-side access paths on the same MCP endpoint:
+
+- Existing consumers can send a scoped bearer key.
+- Marketplace callers without a bearer key receive a standard x402 v2 `402 Payment Required` challenge, pay on X Layer, and replay the request. The successful response includes settlement proof.
+
+Production payment mode uses `X402_ENABLED`, `X402_NETWORK`, `X402_PRICE_USD`, `X402_PAY_TO_ADDRESS`, and `X402_RESOURCE_URL`. It is implemented with the official OKX payment packages; payment verification is never inferred from a client-controlled header.
+
 For a local stdio client:
 
 ```bash
@@ -190,6 +197,8 @@ Production supports two credential layers:
 2. Consumer keys are generated through `/api/v1/admin/api-keys`, stored only as SHA-256 hashes, and assigned the minimum required scopes.
 
 Available scopes are `translate`, `decode`, `quote`, `glossary`, `metrics`, `mcp`, `gitops`, and `admin`. Plaintext consumer keys are returned once at creation or rotation; store them immediately in the consumer's deployment secret manager.
+
+A verified x402 payment grants only the `mcp` scope for that request. It cannot access REST, metrics, GitOps, or administration routes.
 
 ## Local development
 
@@ -248,6 +257,7 @@ npm run verify:production
 - `check` runs linting, TypeScript checking, tests, and production builds.
 - `verify:live` tests real MongoDB, Redis, and LLM credentials.
 - `verify:production` probes the deployed health, readiness, Swagger, REST authentication, and MCP surfaces.
+- The production probe also validates the unpaid x402 v2 challenge, X Layer network, receiving address, positive amount, and advertised resource URL.
 - CI also builds the Docker image and scans application dependencies, the filesystem, and the container for high/critical vulnerabilities.
 
 The production image runs as a non-root user with a readiness health check. Docker Compose additionally uses a read-only application filesystem, a temporary `/tmp`, and `no-new-privileges`.

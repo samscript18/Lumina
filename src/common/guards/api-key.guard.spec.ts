@@ -1,8 +1,8 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ApiKeyGuard } from './api-key.guard';
 
-const context = (authorization?: string) => {
-  const request = { headers: { authorization } };
+const context = (authorization?: string, payment?: { protocol: 'x402'; network: string }) => {
+  const request = { headers: { authorization }, luminaPayment: payment };
   return {
     request,
     value: ({
@@ -46,5 +46,20 @@ describe('ApiKeyGuard', () => {
     const database = { authenticate: jest.fn(async () => ({ id: '1', name: 'dapp', prefix: 'lum_live_abc', scopes: ['translate'], source: 'database' })) };
     const guard = new ApiKeyGuard({ get: () => 'production' } as never, scopedReflector as never, database as never);
     await expect(guard.canActivate(context('Bearer lum_live_test').value)).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('accepts verified x402 payment for the MCP scope', async () => {
+    const scopedReflector = { getAllAndOverride: jest.fn(() => ['mcp']) };
+    const guard = new ApiKeyGuard({ get: () => 'production' } as never, scopedReflector as never, credentials as never);
+    const ctx = context(undefined, { protocol: 'x402', network: 'eip155:196' });
+    await expect(guard.canActivate(ctx.value)).resolves.toBe(true);
+    expect(ctx.request).toHaveProperty('luminaCredential.source', 'x402');
+  });
+
+  it('does not let x402 payment bypass non-MCP scopes', async () => {
+    const scopedReflector = { getAllAndOverride: jest.fn(() => ['admin']) };
+    const guard = new ApiKeyGuard({ get: () => 'production' } as never, scopedReflector as never, credentials as never);
+    await expect(guard.canActivate(context(undefined, { protocol: 'x402', network: 'eip155:196' }).value))
+      .rejects.toBeInstanceOf(ForbiddenException);
   });
 });

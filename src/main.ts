@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { RequestObservabilityInterceptor } from './common/interceptors/request-observability.interceptor';
 import { MetricsService } from './metrics/metrics.service';
+import { X402PaymentService } from './payments/x402-payment.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -21,13 +22,21 @@ async function bootstrap() {
   app.enableCors({
     origin: config.get<string[]>('corsOrigins')?.length ? config.get<string[]>('corsOrigins') : false,
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Hub-Signature-256', 'X-GitHub-Event', 'X-GitHub-Delivery'],
+    allowedHeaders: [
+      'Content-Type', 'Authorization', 'X-Hub-Signature-256', 'X-GitHub-Event', 'X-GitHub-Delivery',
+      'Payment-Signature', 'X-Payment', 'Mcp-Session-Id', 'X-Request-Id',
+    ],
+    exposedHeaders: ['Payment-Required', 'Payment-Response', 'Mcp-Session-Id', 'X-Request-Id'],
   });
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(json({
     limit: config.get<number>('maxPayloadBytes') ?? 1_048_576,
     verify: (req, _res, buffer) => { (req as typeof req & { rawBody?: Buffer }).rawBody = Buffer.from(buffer); },
   }));
+
+  const payments = app.get(X402PaymentService);
+  await payments.initialize();
+  app.use(payments.middleware());
 
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new RequestObservabilityInterceptor(app.get(MetricsService)), new ResponseEnvelopeInterceptor());

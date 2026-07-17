@@ -10,6 +10,12 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "@okxweb3/x402-express": ["node_modules/@okxweb3/x402-express/dist/cjs/index.d.ts"],
+      "@okxweb3/x402-core/http": ["node_modules/@okxweb3/x402-core/dist/cjs/http/index.d.ts"],
+      "@okxweb3/x402-core/types": ["node_modules/@okxweb3/x402-core/dist/cjs/types/index.d.ts"],
+      "@okxweb3/x402-evm/exact/server": ["node_modules/@okxweb3/x402-evm/dist/cjs/exact/server/index.d.ts"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
