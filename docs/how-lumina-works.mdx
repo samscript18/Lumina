@@ -37,7 +37,8 @@ description: "Understand the translation pipeline, storage layers, and integrati
 
 ## Production safety
 
-- Bearer authentication protects credit-spending REST and MCP calls.
+- Bearer authentication protects REST calls and remains available for trusted MCP consumers.
+- OKX.AI callers can use the same MCP endpoint through a standard x402 challenge, payment verification, replay, and settlement flow.
 - HMAC-SHA256 signatures authenticate GitHub webhook payloads.
 - Redis coordinates rate limits, idempotency, caching, and distributed locks.
 - MongoDB keeps durable translations and the Web3 glossary.

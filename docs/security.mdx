@@ -5,7 +5,8 @@ description: "Authentication, input integrity, and operational safeguards."
 
 ## Authentication boundaries
 
-- REST and MCP billable routes use bearer authentication.
+- REST routes use bearer authentication. MCP accepts either a scoped bearer credential or a verified x402 payment.
+- x402 access is restricted to the MCP scope and is verified and settled through the official OKX payment SDK.
 - Native GitHub webhooks use `X-Hub-Signature-256`, not the bearer key.
 - Health endpoints are intentionally public for Render probes.
 - Swagger describes the bearer scheme but never contains a real key.

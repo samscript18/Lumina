@@ -4,6 +4,7 @@ dotenv.config({ path: process.env.ENV_FILE ?? '.env.local' });
 const baseUrl = (process.env.LUMINA_BASE_URL ?? 'https://lumina-e3vi.onrender.com').replace(/\/$/, '');
 const apiKey = process.env.LUMINA_API_KEY;
 const timeoutMs = Number(process.env.SMOKE_TIMEOUT_MS ?? 30_000);
+const expectedX402Resource = process.env.X402_RESOURCE_URL ?? `${baseUrl}/mcp`;
 
 async function request(name: string, path: string, init: RequestInit = {}, expected = [200, 201]) {
   const response = await fetch(`${baseUrl}${path}`, { ...init, signal: AbortSignal.timeout(timeoutMs) });
@@ -25,6 +26,34 @@ async function alert(message: string): Promise<void> {
 function parseMcpResponse(body: string): { result?: { tools?: { name: string }[] } } {
   const data = body.split('\n').find((line) => line.startsWith('data: '))?.slice(6) ?? body;
   return JSON.parse(data) as { result?: { tools?: { name: string }[] } };
+}
+
+async function probeX402Challenge(): Promise<void> {
+  const response = await request('x402 unpaid MCP challenge', '/mcp', {
+    method: 'POST',
+    headers: {
+      accept: 'application/json, text/event-stream',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0', id: 1, method: 'initialize',
+      params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'lumina-x402-probe', version: '1.0.0' } },
+    }),
+  }, [402]);
+  const encoded = response.headers.get('payment-required');
+  if (!encoded) throw new Error('x402 challenge is missing PAYMENT-REQUIRED');
+  const challenge = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8')) as {
+    x402Version?: number;
+    resource?: { url?: string };
+    accepts?: { network?: string; payTo?: string; amount?: string }[];
+  };
+  const option = challenge.accepts?.[0];
+  if (challenge.x402Version !== 2) throw new Error('x402 challenge is not version 2');
+  if (challenge.resource?.url !== expectedX402Resource) throw new Error('x402 challenge advertises the wrong resource URL');
+  if (option?.network !== 'eip155:196') throw new Error('x402 challenge is not configured for X Layer mainnet');
+  if (!/^0x[a-fA-F0-9]{40}$/.test(option.payTo ?? '')) throw new Error('x402 challenge has an invalid receiving address');
+  if (!/^\d+$/.test(option.amount ?? '') || Number(option.amount) <= 0) throw new Error('x402 challenge has an invalid amount');
+  console.log('x402 challenge: version 2 on X Layer mainnet');
 }
 
 async function probeMcp(apiKey: string): Promise<void> {
@@ -72,6 +101,7 @@ async function main() {
   for (const path of ['/api/v1/translate/string', '/api/v1/decode-error', '/api/v1/webhooks/github']) {
     if (!openapi.paths?.[path]) throw new Error(`OpenAPI is missing ${path}`);
   }
+  await probeX402Challenge();
   if (apiKey) {
     const headers = { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' };
     await request('unauthenticated REST rejection', '/api/v1/glossary?term=wallet', {}, [401]);
