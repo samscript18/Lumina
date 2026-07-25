@@ -88,7 +88,10 @@ export class X402PaymentService {
     );
 
     this.handler = (request: Request, response: Response, next: NextFunction) => {
-      if (request.method !== 'POST' || request.path !== '/mcp') return next();
+      // OKX's A2MCP compatibility probe begins with GET /mcp.  Advertise the
+      // payment requirement for that probe as well as real POST requests, but
+      // keep payment validation and MCP execution POST-only.
+      if (!['GET', 'POST'].includes(request.method) || request.path !== '/mcp') return next();
 
       // Existing SDK and operator clients may continue to use scoped bearer
       // credentials. Marketplace callers without a bearer key use x402.
@@ -100,6 +103,8 @@ export class X402PaymentService {
         response.status(402).json(challenge);
         return;
       }
+
+      if (request.method !== 'POST') return next();
 
       const facilitatorReady = this.facilitatorReady ??= resourceServer.initialize().catch((error: unknown) => {
         this.facilitatorReady = undefined;

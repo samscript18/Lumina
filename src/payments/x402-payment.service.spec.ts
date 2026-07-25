@@ -35,7 +35,7 @@ describe('X402PaymentService', () => {
     await expect(service.initialize()).rejects.toThrow('X402_NETWORK');
   });
 
-  it('returns an immediate standard v2 challenge without contacting the facilitator', async () => {
+  it.each(['GET', 'POST'])('returns an immediate standard v2 challenge for %s /mcp without contacting the facilitator', async (method) => {
     const values: Record<string, unknown> = {
       'x402.enabled': true,
       'x402.network': 'eip155:196',
@@ -59,7 +59,7 @@ describe('X402PaymentService', () => {
     };
     const next = jest.fn();
     service.middleware()(
-      { method: 'POST', path: '/mcp', headers: {} } as never,
+      { method, path: '/mcp', headers: {} } as never,
       response as never,
       next,
     );
