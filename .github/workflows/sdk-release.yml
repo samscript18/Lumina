@@ -20,4 +20,31 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run check
       - run: npm run sdk:pack
-      - run: npm publish --workspace @lumina-ai/sdk --access public --provenance
+      - name: Validate release version
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          package_version="$(node -p "require('./packages/sdk/package.json').version")"
+          tag_version="${RELEASE_TAG#sdk-v}"
+
+          if [ "$tag_version" != "$package_version" ]; then
+            echo "::error::Release tag $RELEASE_TAG does not match SDK version $package_version"
+            exit 1
+          fi
+
+          echo "value=$package_version" >> "$GITHUB_OUTPUT"
+      - name: Check published version
+        id: registry
+        env:
+          SDK_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          if npm view "@lumina-ai/sdk@$SDK_VERSION" version --json >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "@lumina-ai/sdk@$SDK_VERSION is already published; skipping the immutable version."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish SDK
+        if: steps.registry.outputs.published != 'true'
+        run: npm publish --workspace @lumina-ai/sdk --access public --provenance
